@@ -42,6 +42,12 @@ This will start a loop listening for changes with a frequency of 10Hz.
 Changed data will be written to stdout. If the server exits, the program
 will exit. It can be killed with the usual signals.
 
+## Special topics
+The server publishes several special topics to which other programs
+can subscribe. These are:
+- **topics** : a list of all published topics
+
+
 ## API
 The API is defined in **diamondapparatus.h**. All functions are in
 the **diamondapparatus** namespace.
@@ -82,11 +88,10 @@ attempt is made to access an out of range datum, a float zero datum will be retu
 
 ### Topic states
 as set in topic copies returned from **get()**:
-- **NotConnected** - the client is not connected and this topic contains no data
-- **NotFound** - no data has yet been received for this topic.
-- **Unchanged** - the topic is unchanged since **get()** was last called on it.
-- **Changed** - the topic has changed since **get()** was last called.
-
+- **Topic::NotConnected** - the client is not connected and this topic contains no data
+- **Topic::NotFound** - no data has yet been received for this topic.
+- **Topic::Unchanged** - the topic is unchanged since **get()** was last called on it.
+- **Topic::Changed** - the topic has changed since **get()** was last called.
 
 ## Data
 Each individual Datum can be created with a string or float constructor
