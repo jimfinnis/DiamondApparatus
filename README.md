@@ -39,12 +39,13 @@ the **diamondapparatus** namespace.
 This starts the server and never exits.
 
 ### init()
-Initialises a client connection to the server and is required for
-all other functions except **server()**.
+Initialises a client connection to the server, and is required for
+all other functions except **server()**. This starts the client thread, which
+constantly waits for messages.
 
 ### destroy()
 Closes down the client connection politely and should be called
-when the code exits.
+when the code exits. Does so by killing the thread and closing the socket.
 
 ### subscribe(const char *name)
 Subscribes to a topic of a given name. This can then be checked
