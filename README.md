@@ -59,8 +59,8 @@ appropriate size. Returns the number of floats actually
 in the array. If this would have been >maxsize, the array
 will be truncated.
 Return values:
-  0    - value has not been changed so no copying was done
- -1   - topic has not been subscribed to
- -2   - topic has not yet received data
- -3   - not connected (thread not running)
- n    - number of floats copied (will be <= maxsize)
+*  0    - value has not been changed so no copying was done
+* -1   - topic has not been subscribed to
+* -2   - topic has not yet received data
+* -3   - not connected (thread not running)
+* n    - number of floats copied (will be <= maxsize)
