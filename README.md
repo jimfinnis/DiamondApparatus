@@ -27,7 +27,7 @@ This will kill the server and disconnect all subscribers. They will
 not die automatically, but their client thread will exit. This can
 be tested for with **isRunning()**.
 
-### diamond pub _name_ _types_ _val_
+### diamond pub _name_ _types_ _val_ _[val..]_
 This will publish values to a topic. The types string consists of
 "s" for string and "f" for float, so 
 
