@@ -11,6 +11,12 @@ any publications received onto subscribers which have expressed an
 interest in that topic. Thus, a new subscriber which joins the server
 will not receive a topic until it changes.
 
+## Environment variables: hostname and port
+The default port number is **29921**, but can be changed by setting
+the **DIAMOND_PORT** environment variable. Similarly, the hostname
+for client connection can be set by the **DIAMOND_HOST** environment
+variable.
+
 ## Main program
 The main program can be used to run the server, listen for changes,
 and publish new data, and kill the server.
@@ -36,12 +42,14 @@ The API is defined in **diamondapparatus.h**. All functions are in
 the **diamondapparatus** namespace.
 
 ### server()
-This starts the server and never exits.
+This starts the server and never exits. See above for how to
+set the port number.
 
 ### init()
 Initialises a client connection to the server, and is required for
 all other functions except **server()**. This starts the client thread, which
-constantly waits for messages.
+constantly waits for messages. See above for how to change the host
+and port for the server.
 
 ### destroy()
 Closes down the client connection politely and should be called

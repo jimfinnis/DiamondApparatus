@@ -73,7 +73,7 @@ enum ClientState {
 class MyClient : public TCPClient {
     ClientState state;
 public:
-    MyClient() : TCPClient("127.0.0.1",DEFAULTPORT) {
+    MyClient(const char *host,int port) : TCPClient(host,port){
         state = ST_IDLE;
     }
     
@@ -220,9 +220,17 @@ static void waitForIdle(){
 
 namespace diamondapparatus {
 void init(){
-    client = new MyClient();
+    // get environment data or defaults
+    const char *hn = getenv("DIAMOND_HOST");
+    char *hostname = NULL;
+    if(hn)hostname = strdup(hn);
+    const char *pr = getenv("DIAMOND_PORT");
+    int port = pr?atoi(pr):0;
+    
+    client = new MyClient(hostname?hostname:"localhost",port);
     pthread_mutex_init(&mutex,NULL);
     pthread_create(&thread,NULL,threadfunc,NULL);
+    if(hostname)free(hostname);
     while(!running){} // wait for thread
 }    
 

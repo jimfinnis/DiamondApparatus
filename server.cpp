@@ -64,7 +64,9 @@ class MyServer : public TCPServer {
     }
     
     void publish(char *p,uint32_t pktsize){
-        // get data
+        // This currently works by just bouncing the publish
+        // straight on to the subscribers having changed
+        // the message type
         Data *d = (Data *)p;
         d->type = htonl(SC_NOTIFY); // overwrite pkt type
         std::string name(d->name);
@@ -82,11 +84,12 @@ class MyServer : public TCPServer {
     
     
 public:
-    MyServer() : TCPServer(DEFAULTPORT){}
+    MyServer(int port) : TCPServer(port){}
     virtual void process(uint32_t packetsize,void *packet){
         const char *name;
         char *p = (char *)packet;
         StrMsg *sm;
+        
         
         uint32_t type = ntohl(*(uint32_t *)p);
         printf("Packet type %d\n",type);
@@ -142,11 +145,14 @@ void handler(int sig){
 namespace diamondapparatus {
 
 void server() {
+    const char *pr = getenv("DIAMOND_PORT");
+    int port = pr?atoi(pr):DEFAULTPORT;
+    
     signal(SIGINT,handler);
     signal(SIGQUIT,handler);
     signal(SIGPIPE,SIG_IGN); // ignore closed socket at far end
     
-    serv = new MyServer();
+    serv = new MyServer(port);
     while(serv){
         serv->update();
         if(serverKill){

@@ -29,14 +29,18 @@ struct DiamondException {
 
 // start the server and never exit. Don't run this
 // unless you really know what you're up do; typically
-// the diamond app will do this.
-
+// the diamond app will do this. The port is either
+// DEFAULT_PORT in tcp.h, or DIAMOND_PORT in the environment
+// if it is set.
 void server();
 
 // client calls
 
-/// initialise the system and connect to the server
-void init(); 
+/// initialise the system and connect to the server. The host
+/// and port to connect to are the environment variables
+/// DIAMOND_HOST and DIAMOND_PORT, or localhost and DEFAULT_PORT
+/// (see tcp.h) if these are not set.
+void init();
 
 /// close down the client politely
 void destroy();
