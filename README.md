@@ -27,7 +27,7 @@ This will kill the server and disconnect all subscribers. They will
 not die automatically, but their client thread will exit. This can
 be tested for with **isRunning()**.
 
-### diamond pub <name> <types> <val> 
+### diamond pub _name_ _types_ _val_
 This will publish values to a topic. The types string consists of
 "s" for string and "f" for float, so 
 
@@ -37,7 +37,7 @@ diamond pub foo sff Hello 0.1 0.2
 
 will publish a string ("Hello") and two floats to the "foo" topic.
 
-### diamond listen <name>
+### diamond listen _name_
 This will start a loop listening for changes with a frequency of 10Hz.
 Changed data will be written to stdout. If the server exits, the program
 will exit. It can be killed with the usual signals.
