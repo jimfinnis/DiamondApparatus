@@ -225,8 +225,7 @@ void init(){
     char *hostname = NULL;
     if(hn)hostname = strdup(hn);
     const char *pr = getenv("DIAMOND_PORT");
-    int port = pr?atoi(pr):0;
-    
+    int port = pr?atoi(pr):DEFAULTPORT;
     client = new MyClient(hostname?hostname:"localhost",port);
     pthread_mutex_init(&mutex,NULL);
     pthread_create(&thread,NULL,threadfunc,NULL);

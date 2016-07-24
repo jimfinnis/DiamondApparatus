@@ -190,7 +190,7 @@ class TCPClient : public TCPProcessor {
     TCPReceiver r;
 public:
     TCPClient(const char *hostname,int port) {
-        printf("Starting client\n");
+        printf("Starting client for %s:%d\n",hostname,port);
         struct sockaddr_in addr;
         struct hostent *server;
         fd = socket(AF_INET,SOCK_STREAM,0);
