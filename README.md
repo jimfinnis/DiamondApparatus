@@ -17,7 +17,7 @@ variable.
 
 ## Main program
 The main program can be used to run the server, listen for changes,
-and publish new data, and kill the server.
+publish new data, and kill the server.
 
 ### diamond server
 This will run the server and never exit.
