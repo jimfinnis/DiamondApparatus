@@ -5,11 +5,14 @@
  */
 
 #include <signal.h>
-#include "tcp.h"
-#include "messages.h"
-
 #include <list>
 #include <string>
+
+#include "tcp.h"
+#include "messages.h"
+#include "data.h"
+
+namespace diamondapparatus {
 
 static bool serverKill=false;
 
@@ -19,6 +22,28 @@ class MyServer : public TCPServer {
     std::map<std::string,std::list<int> > subscribers;
     // lists of topics for each subscriber
     std::map<int,std::list<std::string> > subtopics;
+    
+    std::map<std::string,Topic *> topics;
+    
+    Topic *findOrCreateTopic(const char *n){
+        Topic *t;
+        if(topics.find(n)!=topics.end())
+            t = topics[n];
+        else {
+            t = new Topic();
+            topics[n]=t;
+        }
+        return t;
+    }
+    
+    void rebuildTopicsTopic(){
+        Topic *t = findOrCreateTopic("topics");
+        t->clear();
+        std::map<std::string,Topic *>::iterator i;
+        for(i=topics.begin();i!=topics.end();++i){
+            t->add(Datum(i->first.c_str()));
+        }
+    }
     
     void ack(int c,const char *m){
         SCAck pkt;
@@ -33,6 +58,15 @@ class MyServer : public TCPServer {
         subtopics[fd].push_back(std::string(n));
         printf("--- added %d to subs for %s\n",fd,n);
         ack(0,"OK");
+        
+        // now send any data we already have for that topic
+        if(topics.find(n)!=topics.end()){
+            Topic *t = topics[n];
+            int size;
+            const char *p = t->toMessage(&size,SC_NOTIFY,n);
+            respond((void *)p,size);
+        }
+        
     }
     
     void unsubscribe(int fd){
@@ -63,25 +97,41 @@ class MyServer : public TCPServer {
         subscribers.erase(str);
     }
     
+    
     void publish(char *p,uint32_t pktsize){
-        // This currently works by just bouncing the publish
-        // straight on to the subscribers having changed
-        // the message type
-        DataMsg *d = (DataMsg *)p;
+        // store the data for the topic
+        const char *name = Topic::getNameFromMsg(p);
+        Topic *t;
+        bool isnew=false;
+        if(topics.find(name)!=topics.end())
+            t = topics[name];
+        else {
+            t = new Topic();
+            topics[name]=t;
+            isnew=true;
+        }
+        t->fromMessage(p);
+        
+        // data received and stored - now just push the data
+        // back to the subscribers.
+        
+        NoDataMsg *d = (NoDataMsg *)p;
         d->type = htonl(SC_NOTIFY); // overwrite pkt type
-        std::string name(d->name);
         // get the list of subscribers to this topic
         std::list<int>& subs = subscribers[name];
         std::list<int>::iterator i;
-        dprintf("--- publish loop for %s\n",d->name);
+        dprintf("--- publish loop for %s\n",name);
         for(i=subs.begin();i!=subs.end();++i){
             printf("----Sending to %d\n",*i);
             basesend(*i,p,pktsize);
         }
         dprintf("--- publish loop done\n");
         ack(0,"OK");
+        
+        // rebuild the topics topic if we made a new one
+        if(isnew)
+           rebuildTopicsTopic();
     }
-    
     
 public:
     MyServer(int port) : TCPServer(port){}
@@ -141,8 +191,6 @@ void handler(int sig){
  * 
  * 
  */
-
-namespace diamondapparatus {
 
 void server() {
     const char *pr = getenv("DIAMOND_PORT");

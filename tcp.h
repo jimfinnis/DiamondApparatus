@@ -51,7 +51,7 @@ inline void setsock(int fd){
 
 
 /// call to send data
-inline void basesend(int fd,void *data,uint32_t size){
+inline void basesend(int fd,const void *data,uint32_t size){
     dprintf("Sending %d bytes\n",size);
     uint32_t sizetosend = htonl(size);
     // retry some
@@ -214,7 +214,7 @@ public:
         close(fd);
     }
     
-    void request(void *data,uint32_t size){
+    void request(const void *data,uint32_t size){
         basesend(fd,data,size);
     }
     

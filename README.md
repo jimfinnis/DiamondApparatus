@@ -3,13 +3,11 @@ is a simple publish/subscribe broker and library, using C++ and
 TCP/IP. It's a bit slow, not sure why -- about 10 msgs a second
 on loopback.
 
-Data is in the form of topics, named blocks of data (currently
-arrays of floats). Publishers send topics, and any subscribers subscribed
-to that topic receive the new data.
-The server does not store topic data -- it simply passes
-any publications received onto subscribers which have expressed an
-interest in that topic. Thus, a new subscriber which joins the server
-will not receive a topic until it changes.
+Data is in the form of topics, named blocks of data. Each topic
+contains an array of Datum objects, which are either floats or strings.
+Publishers send topics, and any subscribers subscribed
+to that topic receive the new data. The broker (server) also stores
+the last data on a topic, and sends it to any new subscriber.
 
 ## Environment variables: hostname and port
 The default port number is **29921**, but can be changed by setting
@@ -29,8 +27,15 @@ This will kill the server and disconnect all subscribers. They will
 not die automatically, but their client thread will exit. This can
 be tested for with **isRunning()**.
 
-### diamond pub <name> <val> 
-This will publish a single float to a topic.
+### diamond pub <name> <types> <val> 
+This will publish values to a topic. The types string consists of
+"s" for string and "f" for float, so 
+
+```
+diamond pub foo sff Hello 0.1 0.2
+```
+
+will publish a string ("Hello") and two floats to the "foo" topic.
 
 ### diamond listen <name>
 This will start a loop listening for changes with a frequency of 10Hz.
@@ -59,17 +64,48 @@ when the code exits. Does so by killing the thread and closing the socket.
 Subscribes to a topic of a given name. This can then be checked
 with **get()**.
 
-### publish(const char *name, float *f,int count)
-Publishes an array of floats to a topic.
+### publish(const char *name, Topic *t)
+Publishes data to a topic.
 
-### get(const char *n,float *out,int maxsize)
-Gets the latest value of a topic into an array of floats of
-appropriate size. Returns the number of floats actually
-in the array. If this would have been >maxsize, the array
-will be truncated.
-Return values:
-*  0    - value has not been changed so no copying was done
-* -1   - topic has not been subscribed to
-* -2   - topic has not yet received data
-* -3   - not connected (thread not running)
-* n    - number of floats copied (will be <= maxsize)
+### Topic get(const char *n)
+Gets the latest value of a topic, as a new copy to avoid threading problems.
+See below for how to access the data and state
+
+## Topics
+Topics, used by **publish()** and **get()**, support the following operations:
+- **size()** returns the size (number of Data)
+- **square brackets** access individual Datum objects (as constant refs)
+- **add(const Datum&)** adds a datum
+- **clear()** empties the topic
+- the **state** member contains the state of the topic.
+
+### Topic states
+as set in topic copied returned from **get()**:
+- **NotConnected** - the client is not connected and this topic contains no data
+- **NotFound** - no data has yet been received for this topic.
+- **Unchanged** - the topic is unchanged since **get()** was last called on it.
+- **Changed** - the topic has changed since **get()** was last called.
+
+
+## Data
+Each individual Datum can be created with a string or float constructor
+and added to the topic:
+
+```c++
+Topic t;
+t.add(Datum("string item"))
+t.add(Datum(0.1));
+publish("foo",&t);
+```
+
+The value of data can be retrieved with the **s()** and **f()**
+functions, returning string (as const char pointer) and float
+respectively. If the retrieval of the wrong type is attempted,
+default values will be returned:
+
+```c++
+Topic t = get("foo")
+if(t.state == Topic::Changed){
+    printf("%s\n",t[0].s());
+}   
+```

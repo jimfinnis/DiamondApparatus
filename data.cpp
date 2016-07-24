@@ -12,6 +12,8 @@
  * Message format for a datum:
  * uint32_t msgtype
  * uint32_t numitems
+ * byte namelen+1
+ * char name[namelen+1] (null term)
  * for each item:
  *   byte type
  *   union {
@@ -26,9 +28,20 @@
 
 using namespace diamondapparatus;
 
-const char *Data::toMessage(int *size,int msgtype){
+const char *Topic::getNameFromMsg(const char *p){
+    p+=sizeof(uint32_t)*2+1;
+    return p;
+}
+
+
+const char *Topic::toMessage(int *size,int msgtype,const char *name){
+    int nll = strlen(name);
+    if(nll>128)nll=128;
+    uint8_t namelen = nll+1;
+    
     // first task - calculate the size.
     *size = sizeof(uint32_t)*2; // msgtype and item count
+    *size += namelen+1; // namelen and name
     
     std::vector<Datum>::iterator i;
     for(i=d.begin();i!=d.end();++i){
@@ -52,6 +65,9 @@ const char *Data::toMessage(int *size,int msgtype){
     // and fill it in, remembering to perform conversions
     *(uint32_t *)p = htonl(msgtype); p+=sizeof(uint32_t);
     *(uint32_t *)p = htonl(d.size()); p+=sizeof(uint32_t);
+    *p++ = namelen;
+    strcpy(p,name); // this one is null terminated
+    p+=namelen;
     
     for(i=d.begin();i!=d.end();++i){
         int len;
@@ -76,10 +92,17 @@ const char *Data::toMessage(int *size,int msgtype){
     return buf;
 }
 
-uint32_t Data::fromMessage(const char *p){
+uint32_t Topic::fromMessage(const char *p,char *namebuf){
     d.clear();
     uint32_t msg = ntohl(*(uint32_t *)p);p+=sizeof(uint32_t);
     uint32_t count = ntohl(*(uint32_t *)p);p+=sizeof(uint32_t);
+    uint8_t namelen = *p++;
+    
+    if(namebuf){
+        memcpy(namebuf,p,namelen);
+        namebuf[namelen]=0;
+    }
+    p+=namelen;
     
     for(int i=0;i<count;i++){
         int len;

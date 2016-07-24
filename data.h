@@ -54,6 +54,16 @@ struct Datum {
         d.s = strdup(s);
     }
     
+    float f() const{
+        if(t!=DT_FLOAT)return 0.0;
+        else return d.f;
+    }
+    
+    const char *s() const{
+        if(t!=DT_STRING)return "?notstring?";
+        else return d.s;
+    }
+    
     void dump() const{
         switch(t){
         case DT_FLOAT:
@@ -76,10 +86,22 @@ struct Datum {
     }
 };
 
+
+
 /// Collection of datums is data. Clearly.
 
-struct Data {
+
+class Topic {
+    friend class MyClient;
+private:
     std::vector<Datum> d;
+public:    
+    
+    static const int Unchanged=1;
+    static const int Changed=2;
+    static const int NotFound=3;
+    static const int NotConnected=4;
+    int state;
     
     const Datum &operator[] (int n) const {
         return d[n];
@@ -93,16 +115,25 @@ struct Data {
         return d.size();
     }
     
+    void clear(){
+        d.clear();
+    }
+    
     /// convert to a message where the first uint32_t is the type,
     /// allocating and returning a buffer. Set the size of the allocated
     /// buffer in the integer ptr provided.
     /// Convert all floats/ints to network order.
-    const char *toMessage(int *size,int msgtype);
+    /// Also requires a name for the data.
+    const char *toMessage(int *size,int msgtype,const char *name);
     
     /// load the contents of the message into this object, discarding
-    /// previous data. Returns message type.
+    /// previous data. Returns message type. Can have a buffer
+    /// to write the data name into (but see getNameFromMsg).
     /// Convert all floats/ints from network order.
-    uint32_t fromMessage(const char *msg);
+    uint32_t fromMessage(const char *p,char *namebuf=NULL);
+    /// this reads the name from the message without doing
+    /// anything else
+    static const char *getNameFromMsg(const char *p);
 };
 
 }
