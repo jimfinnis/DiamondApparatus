@@ -7,6 +7,10 @@
 #ifndef __DIAMONDAPPARATUS_H
 #define __DIAMONDAPPARATUS_H
 
+#include <errno.h>
+#include <string.h>
+#include <stdio.h>
+
 namespace diamondapparatus {
 
 struct DiamondException {
