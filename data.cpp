@@ -28,6 +28,8 @@
 
 using namespace diamondapparatus;
 
+Datum Topic::zeroDat;
+
 const char *Topic::getNameFromMsg(const char *p){
     p+=sizeof(uint32_t)*2+1;
     return p;

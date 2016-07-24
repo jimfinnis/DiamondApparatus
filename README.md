@@ -62,25 +62,26 @@ when the code exits. Does so by killing the thread and closing the socket.
 
 ### subscribe(const char *name)
 Subscribes to a topic of a given name. This can then be checked
-with **get()**.
+periodically for new data with **get()**.
 
 ### publish(const char *name, Topic *t)
 Publishes data to a topic.
 
 ### Topic get(const char *n)
 Gets the latest value of a topic, as a new copy to avoid threading problems.
-See below for how to access the data and state
+See below for how to access the data and state.
 
 ## Topics
 Topics, used by **publish()** and **get()**, support the following operations:
 - **size()** returns the size (number of Data)
-- **square brackets** access individual Datum objects (as constant refs)
+- **square brackets** access individual Datum objects (as constant refs). If an
+attempt is made to access an out of range datum, a float zero datum will be returned.
 - **add(const Datum&)** adds a datum
 - **clear()** empties the topic
 - the **state** member contains the state of the topic.
 
 ### Topic states
-as set in topic copied returned from **get()**:
+as set in topic copies returned from **get()**:
 - **NotConnected** - the client is not connected and this topic contains no data
 - **NotFound** - no data has yet been received for this topic.
 - **Unchanged** - the topic is unchanged since **get()** was last called on it.

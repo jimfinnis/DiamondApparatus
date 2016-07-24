@@ -102,9 +102,13 @@ public:
     static const int NotFound=3;
     static const int NotConnected=4;
     int state;
+    static Datum zeroDat;
     
     const Datum &operator[] (int n) const {
-        return d[n];
+        if(n<0 || n>=d.size())
+            return zeroDat;
+        else
+            return d[n];
     }
     
     void add(const Datum &q){
