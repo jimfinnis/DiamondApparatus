@@ -7,6 +7,8 @@
 #ifndef __MESSAGES_H
 #define __MESSAGES_H
 
+namespace diamondapparatus {
+
 // client to server
 
 // data - Data
@@ -40,7 +42,7 @@ struct StrMsg {
 };
 
 // for both CS_PUBLISH and SC_NOTIFY
-struct Data {
+struct DataMsg {
     uint32_t type;
     char name[256];
     uint32_t count;
@@ -80,6 +82,6 @@ struct Data {
 };
 
 
-          
+}          
 
 #endif /* __MESSAGES_H */

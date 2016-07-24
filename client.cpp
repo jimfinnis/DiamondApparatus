@@ -82,7 +82,7 @@ public:
         state = s;
     }
     
-    void notify(Data *d){
+    void notify(DataMsg *d){
         dprintf("notify at %p\n",d);
         d->ntoh();
         if(topics.find(std::string(d->name)) == topics.end()){
@@ -110,7 +110,7 @@ public:
         switch(state){
         case ST_IDLE:
             if(type == SC_NOTIFY){
-                notify((Data *)p);
+                notify((DataMsg *)p);
             }
             break;
         case ST_AWAITACK:
@@ -141,9 +141,9 @@ public:
     
     void publish(const char *name,float *f,int size){
         lock("publish");
-        Data dummy; // just for sizing
+        DataMsg dummy; // just for sizing
         dummy.count = size;
-        Data *d = (Data *)malloc(dummy.size());
+        DataMsg *d = (DataMsg *)malloc(dummy.size());
         d->type = htonl(CS_PUBLISH);
         d->count = size;
         strcpy(d->name,name);

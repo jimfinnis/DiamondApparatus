@@ -67,7 +67,7 @@ class MyServer : public TCPServer {
         // This currently works by just bouncing the publish
         // straight on to the subscribers having changed
         // the message type
-        Data *d = (Data *)p;
+        DataMsg *d = (DataMsg *)p;
         d->type = htonl(SC_NOTIFY); // overwrite pkt type
         std::string name(d->name);
         // get the list of subscribers to this topic
