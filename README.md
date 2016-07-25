@@ -42,6 +42,9 @@ This will start a loop listening for changes with a frequency of 10Hz.
 Changed data will be written to stdout. If the server exits, the program
 will exit. It can be killed with the usual signals.
 
+### diamond version
+Will print the current version number and name, and exit.
+
 ## Special topics
 The server publishes several special topics to which other programs
 can subscribe. These are:

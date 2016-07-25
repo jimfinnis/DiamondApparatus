@@ -13,7 +13,8 @@
 using namespace diamondapparatus;
 
 void usagepanic(){
-    fprintf(stderr,"Usage: diamond server | pub <topic> <types> <val>... | listen <topic> | kill\n");
+    fprintf(stderr,"Diamond Apparatus %d (%s)\n",VERSION,VERSIONNAME);
+    fprintf(stderr,"Usage: diamond server | pub <topic> <types> <val>... | listen <topic> | kill | version\n");
     fprintf(stderr,"       types is a string of chars, f=float, s=string.\n");
     exit(1);
 }
@@ -26,6 +27,7 @@ void handler(int sig){
 
 
 int main(int argc,char *argv[]){
+    
     if(argc<2){
         usagepanic();
     }
@@ -36,6 +38,11 @@ int main(int argc,char *argv[]){
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
         }
+        exit(0);
+    }
+    
+    if(!strcmp("version")){
+        printf("Diamond Apparatus %d (%s)\n",VERSION,VERSIONNAME);
         exit(0);
     }
     

@@ -13,6 +13,9 @@
 
 #include "data.h"
 
+#define VERSION "100"
+#define VERSIONNAME "Malachite Territory"
+
 namespace diamondapparatus {
 
 struct DiamondException {
