@@ -71,6 +71,7 @@ public:
         // if we were waiting for this, signal.
         if(waittopic && !strcmp(name,waittopic)){
             pthread_cond_signal(&getcond);
+            waittopic=NULL; // and zero the wait topic.
         }
     }
     
