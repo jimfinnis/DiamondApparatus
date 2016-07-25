@@ -157,7 +157,7 @@ t[0].dump();
 ## An example: what "diamond show" does
 This is the code for the **diamond show** command:
 
-```
+```c++
 // connect to the server and start the client thread
 
 init();
