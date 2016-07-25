@@ -17,14 +17,16 @@
 namespace diamondapparatus {
 
 /// this is the database the client writes stuff to from its thread
-static std::map<std::string,Topic *> topics;
+
+typedef std::map<std::string,Topic *> TopicMap;
+static volatile TopicMap topics;
 
 /// primary mutex
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
 /// condition used in get-wait
 static pthread_cond_t getcond = PTHREAD_COND_INITIALIZER;
 
-static bool running=false;
+static bool volatile running=false;
 
 inline void lock(const char *n){
     dprintf("+++Attemping to lock: %s\n",n);
@@ -59,11 +61,12 @@ public:
     void notify(const char *d){
         dprintf("notify at %p\n",d);
         const char *name = Topic::getNameFromMsg(d);
-        if(topics.find(std::string(name)) == topics.end()){
+        TopicMap& tm = (TopicMap &)topics; // lose the volatile
+        if(tm.find(std::string(name)) == tm.end()){
             fprintf(stderr,"Topic %s not in client set, ignoring\n",name);
             return;
         }
-        Topic *t = topics[name];
+        Topic *t = tm[name];
         t->fromMessage(d);
         t->state =Topic::Changed;
         t->timeLastSet = Time::now();
@@ -110,6 +113,11 @@ public:
     
     void subscribe(const char *name){
         lock("subscribe");
+        
+        Topic *t = new Topic();
+        TopicMap& tm = (TopicMap &)topics; // lose the volatile
+        tm[name]=t;
+        
         StrMsg p;
         p.type = htonl(CS_SUBSCRIBE);
         strcpy(p.msg,name);
@@ -164,6 +172,7 @@ static MyClient *client;
 
 static void *threadfunc(void *parameter){
     running = true;
+    dprintf("STARTED THREAD\n");
     while(running){
         // deal with requests
         if(!client->update())break;
@@ -210,8 +219,6 @@ void destroy(){
 
 void subscribe(const char *n){
     if(!running)throw DiamondException("not connected");
-    Topic *t = new Topic();
-    topics[n]=t;
     client->subscribe(n);
     waitForIdle(); // wait for the ack
 }
@@ -242,16 +249,18 @@ Topic get(const char *n,int wait){
         return rv;
     }
     
-    if(topics.find(n) == topics.end()){
+    lock("gettopic");
+    TopicMap& tm = (TopicMap &)topics; // lose the volatile
+    if(tm.find(n) == tm.end()){
         // topic not subscribed to
         rv.state = Topic::NotFound;
+        unlock("gettopic");
         return rv;
     }
     
     // we are connected and subscribed to this topic
     
-    lock("gettopic");
-    Topic *t = topics[n];
+    Topic *t = tm[n];
     if(t->state == Topic::NoData){
         // if WaitAny, wait for data
         if(wait == GetWaitAny){
