@@ -133,7 +133,9 @@ class MyServer : public TCPServer {
     }
     
 public:
-    MyServer(int port) : TCPServer(port){}
+    MyServer(int port) : TCPServer(port){
+        rebuildTopicsTopic();
+    }
     virtual void process(uint32_t packetsize,void *packet){
         const char *name;
         char *p = (char *)packet;

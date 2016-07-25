@@ -14,7 +14,7 @@ using namespace diamondapparatus;
 
 void usagepanic(){
     fprintf(stderr,"Diamond Apparatus %d (%s)\n",VERSION,VERSIONNAME);
-    fprintf(stderr,"Usage: diamond server | pub <topic> <types> <val>... | listen <topic> | kill | version\n");
+    fprintf(stderr,"Usage: diamond server | pub <topic> <types> <val>... | listen <topic> | show <topic> | kill | version\n");
     fprintf(stderr,"       types is a string of chars, f=float, s=string.\n");
     exit(1);
 }
@@ -69,6 +69,19 @@ int main(int argc,char *argv[]){
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
         }
+    } else if(!strcmp(argv[1],"show")){
+        try {
+            if(argc<3)
+                usagepanic();
+            init();
+            subscribe(argv[2]);
+            Topic t = get(argv[2],GetWaitAny);
+            for(int i=0;i<t.size();i++)
+                t[i].dump();
+        } catch(DiamondException e){
+            fprintf(stderr,"Failed: %s\n",e.what());
+        }
+        
     } else if(!strcmp(argv[1],"pub")){
         try{
             init();

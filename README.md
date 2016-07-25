@@ -37,6 +37,11 @@ diamond pub foo sff Hello 0.1 0.2
 
 will publish a string ("Hello") and two floats to the "foo" topic.
 
+### diamond show _name_
+This will wait for data to be present for the topic _name_, and 
+will print it to stdout. If the server exits, the wait will abort;
+if the server already has data for this topic, it will send it
+to the program and the wait will be brief.
 ### diamond listen _name_
 This will start a loop listening for changes with a frequency of 10Hz.
 Changed data will be written to stdout. If the server exits, the program
@@ -147,4 +152,27 @@ subscribe("foo");
 Topic t = get("foo",GetWaitAny);
 t[0].dump();
 }   
+```
+
+## An example: what "diamond show" does
+This is the code for the **diamond show** command:
+
+```
+// connect to the server and start the client thread
+
+init();
+
+// subscribe to the topic - the server will send any
+// data it already has
+
+subscribe(argv[2]);
+
+// wait for any data on that topic
+
+Topic t = get(argv[2],GetWaitAny);
+
+// the data has arrived, print out each datum in the topic
+
+for(int i=0;i<t.size();i++)
+    t[i].dump();
 ```
