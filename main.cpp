@@ -4,6 +4,7 @@
  *
  */
 
+#include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -17,6 +18,13 @@ void usagepanic(){
     exit(1);
 }
 
+void handler(int sig){
+    printf("sig %d caught\n",sig);
+    destroy(); // shut down client
+    exit(1); // no safe way to continue
+}
+
+
 int main(int argc,char *argv[]){
     if(argc<2){
         usagepanic();
@@ -28,24 +36,31 @@ int main(int argc,char *argv[]){
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
         }
-    } else if(!strcmp(argv[1],"listen")){
+        exit(0);
+    }
+    
+    // if not server. We separately init each one, to allow
+    // for the "unknown command" case: we wouldn't want to put
+    // init here and then have it connect even if the command
+    // were unknown.
+    
+    // we set up signals to make sure we destroy the client.
+    signal(SIGINT,handler);
+    signal(SIGQUIT,handler);
+    
+    if(!strcmp(argv[1],"listen")){
         try {
             if(argc<3)
                 usagepanic();
             init();
             subscribe(argv[2]);
             while(isRunning()){
-                usleep(100000);
-                Topic t = get(argv[2]);
-                if(t.state == Topic::Changed){
-                    for(int i=0;i<t.size();i++)
-                        t[i].dump();
-                }
+                Topic t = get(argv[2],GetWaitNew);
+                for(int i=0;i<t.size();i++)
+                    t[i].dump();
             }
-            destroy();
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
-            destroy();
         }
     } else if(!strcmp(argv[1],"pub")){
         try{
@@ -69,11 +84,9 @@ int main(int argc,char *argv[]){
                 }
             }
             
-            publish(name,&t);
-            destroy();
+            publish(name,t);
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
-            destroy();
         }
     } else if(!strcmp(argv[1],"kill")){
         try{
@@ -81,9 +94,13 @@ int main(int argc,char *argv[]){
             killServer();
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
-            destroy();
         }
         
     } else
         usagepanic();
+    
+    // destroy the client which logically must have been init()ed 
+    // at this point.
+    destroy();
+    
 }

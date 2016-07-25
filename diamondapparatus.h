@@ -56,10 +56,14 @@ void destroy();
 void subscribe(const char *n);
 
 /// publish a topic
-void publish(const char *name,Topic *d);
+void publish(const char *name,Topic& d);
 
+// wait for NEW data
+static const int GetWaitNew=1;
+// wait for ANY data
+static const int GetWaitAny=2;
 /// get the a copy of a topic as it currently is.
-Topic get(const char *n);
+Topic get(const char *n,int wait=0);
 
 /// returns false when the client loop has quit (i.e. the server
 /// has died)
@@ -67,6 +71,9 @@ bool isRunning();
 
 /// kill the server
 void killServer();
+
+/// destroy all data on the server
+void clearServer();
 
 
 }

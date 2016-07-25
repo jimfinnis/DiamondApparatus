@@ -155,6 +155,13 @@ public:
         case CS_KILLSERVER:
             serverKill=true;
             break;
+        case CS_CLEARSERVER:{
+            std::map<std::string,Topic *>::iterator i;
+            for(i=topics.begin();i!=topics.end();++i){
+                delete i->second;
+            }
+            topics.clear();
+            break;}
         }
     }
     virtual void onClose(int fd){

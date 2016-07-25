@@ -18,7 +18,11 @@ namespace diamondapparatus {
 /// this is the database the client writes stuff to from its thread
 static std::map<std::string,Topic *> topics;
 
+/// primary mutex
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
+/// condition used in get-wait
+static pthread_cond_t getcond = PTHREAD_COND_INITIALIZER;
+
 static bool running=false;
 
 inline void lock(const char *n){
@@ -48,6 +52,9 @@ public:
         state = s;
     }
     
+    // the topic I'm waiting for in get(), if any.
+    const char *waittopic;
+    
     void notify(const char *d){
         dprintf("notify at %p\n",d);
         const char *name = Topic::getNameFromMsg(d);
@@ -58,6 +65,11 @@ public:
         Topic *t = topics[name];
         t->fromMessage(d);
         t->state =Topic::Changed;
+        
+        // if we were waiting for this, signal.
+        if(waittopic && !strcmp(name,waittopic)){
+            pthread_cond_signal(&getcond);
+        }
     }
     
     virtual void process(uint32_t packetsize,void *packet){
@@ -104,10 +116,10 @@ public:
         unlock("subscribe");
     }
     
-    void publish(const char *name,Topic *d){
+    void publish(const char *name,Topic& d){
         lock("publish");
         int size;
-        const char *p = d->toMessage(&size,CS_PUBLISH,name);
+        const char *p = d.toMessage(&size,CS_PUBLISH,name);
         request(p,size);
         //TODO - ADD TIMEOUT
         setState(ST_AWAITACK);
@@ -115,19 +127,18 @@ public:
         unlock("publish");
     }
     
-    void killServer(){
-        lock("kill");
+    void simpleMsg(int msg){
+        lock("smlmsg");
         NoDataMsg p;
-        p.type = htonl(CS_KILLSERVER);
-        request(&p,sizeof(StrMsg));
-        unlock("kill");
+        p.type = htonl(msg);
+        request(&p,sizeof(NoDataMsg));
+        unlock("smlmsg");
     }
     
     bool isIdle(){
         lock("isidle");
         bool e = (state == ST_IDLE);
         dprintf("Is idle? state=%d, so %s\n",state,e?"true":"false");
-        pthread_mutex_unlock(&mutex);
         unlock("isidle");
         return e;
     }
@@ -183,7 +194,6 @@ void init(){
     const char *pr = getenv("DIAMOND_PORT");
     int port = pr?atoi(pr):DEFAULTPORT;
     client = new MyClient(hostname?hostname:"localhost",port);
-    pthread_mutex_init(&mutex,NULL);
     pthread_create(&thread,NULL,threadfunc,NULL);
     if(hostname)free(hostname);
     while(!running){} // wait for thread
@@ -191,6 +201,8 @@ void init(){
 
 void destroy(){
     running=false;// assume atomic :)
+    pthread_cond_destroy(&getcond);
+    pthread_mutex_destroy(&mutex);
 }
 
 void subscribe(const char *n){
@@ -201,34 +213,59 @@ void subscribe(const char *n){
     waitForIdle(); // wait for the ack
 }
 
-void publish(const char *name,Topic *d){
+void publish(const char *name,Topic& t){
     if(!running)throw DiamondException("not connected");
-    client->publish(name,d);
+    client->publish(name,t);
     waitForIdle(); // wait for the ack
 }
 
 void killServer(){
     if(!running)throw DiamondException("not connected");
-    client->killServer();
+    client->simpleMsg(CS_KILLSERVER);
+}
+void clearServer(){
+    if(!running)throw DiamondException("not connected");
+    client->simpleMsg(CS_CLEARSERVER);
 }
 
 bool isRunning(){
     return running;
 }
 
-Topic get(const char *n){
+Topic get(const char *n,int wait){
     Topic rv;
     if(!running){
         rv.state = Topic::NotConnected;
-    } else if(topics.find(n) == topics.end()){
-        rv.state = Topic::NotFound;
-    } else {
-        lock("gettopic");
-        Topic *t = topics[n];
-        rv = *t;
-        t->state = Topic::Unchanged;
-        unlock("gettopic");
+        return rv;
     }
+    
+    lock("gettopic");
+    if(topics.find(n) == topics.end()){
+        // if WaitAny, wait for data
+        if(wait == GetWaitAny){
+            while(topics.find(n) == topics.end()){
+                client->waittopic = n;
+                // stalls until new data arrives, but unlocks mutex
+                pthread_cond_wait(&getcond,&mutex);
+            }
+            // should now have data and mutex locked again
+        } else {
+            rv.state = Topic::NotFound;
+            return rv;
+        }
+    }
+    if(wait == GetWaitNew){
+        while(topics[n]->state != Topic::Changed){
+            client->waittopic = n;
+            // stalls until new data arrives, but unlocks mutex
+            pthread_cond_wait(&getcond,&mutex);
+        }
+        // should now have data and mutex locked again
+    }
+    Topic *t = topics[n];
+    rv = *t;
+    t->state = Topic::Unchanged;
+    unlock("gettopic");
     return rv;
 }
 

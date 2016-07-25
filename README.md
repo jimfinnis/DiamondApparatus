@@ -68,14 +68,32 @@ when the code exits. Does so by killing the thread and closing the socket.
 
 ### subscribe(const char *name)
 Subscribes to a topic of a given name. This can then be checked
-periodically for new data with **get()**.
+for new data with **get()**, which has options to wait for data.
 
-### publish(const char *name, Topic *t)
+### publish(const char *name, Topic& t)
 Publishes data to a topic.
 
-### Topic get(const char *n)
+### Topic get(const char *n,int wait=0)
 Gets the latest value of a topic, as a new copy to avoid threading problems.
-See below for how to access the data and state.
+See below for how to access the data and state. By default, this will
+check the data asynchronously and return immediately. If used in this
+way, the state of the returned topic should be checked for validity
+(with \textbf{Topic::isValid()}). Otherwise, we can wait for new data
+to arrive or wait for data only if there is no data yet. This is done
+by setting the \textbf{wait} value:
+- **GetWaitAny** waits until the topic contains data, and will not block
+block at all if the topic contains even old data. Use this for routine
+access to topics.
+- **GetWaitNew** waits until new data arrive, and will block if the
+topic contains no data or old data. Use this to wait for updated data.
+
+
+### killServer()
+Sends a message to the server to kill itself.
+
+### clearServer()
+Deletes all stored topic data on the server, but leaves subscriptions
+untouched. Mainly used in testing.
 
 ## Topics
 Topics, used by **publish()** and **get()**, support the following operations:
@@ -99,7 +117,7 @@ and added to the topic:
 
 ```c++
 Topic t;
-t.add(Datum("string item"))
+t.add(Datum("string item"));
 t.add(Datum(0.1));
 publish("foo",&t);
 ```
@@ -110,8 +128,8 @@ respectively. If the retrieval of the wrong type is attempted,
 default values will be returned:
 
 ```c++
-Topic t = get("foo")
-if(t.state == Topic::Changed){
-    printf("%s\n",t[0].s());
+subscribe("foo");
+Topic t = get("foo",GetWaitAny);
+printf("%s\n",t[0].s());
 }   
 ```

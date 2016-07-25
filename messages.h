@@ -17,6 +17,8 @@ namespace diamondapparatus {
 #define CS_SUBSCRIBE 2
 // data - NoDataMsg
 #define CS_KILLSERVER 3
+// data - NoDataMsg
+#define CS_CLEARSERVER 4
 
 // server to client
 // data - SCAck

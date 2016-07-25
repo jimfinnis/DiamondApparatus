@@ -123,6 +123,11 @@ public:
         d.clear();
     }
     
+    /// does the topic actually contain valid data?
+    bool isValid(){
+        return (state == Unchanged || state == Changed);
+    }
+    
     /// convert to a message where the first uint32_t is the type,
     /// allocating and returning a buffer. Set the size of the allocated
     /// buffer in the integer ptr provided.
