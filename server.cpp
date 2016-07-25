@@ -44,19 +44,10 @@ class MyServer : public TCPServer {
         }
     }
     
-    void ack(int c,const char *m){
-        SCAck pkt;
-        pkt.type = htonl(SC_ACK);
-        strcpy(pkt.msg,m);
-        pkt.code = htons(c);
-        respond(&pkt,sizeof(pkt));
-    }
-    
     void subscribe(int fd,const char *n){
         subscribers[std::string(n)].push_back(fd);
         subtopics[fd].push_back(std::string(n));
         printf("--- added %d to subs for %s\n",fd,n);
-        ack(0,"OK");
         
         // now send any data we already have for that topic
         if(topics.find(n)!=topics.end()){
@@ -125,7 +116,6 @@ class MyServer : public TCPServer {
             basesend(*i,p,pktsize);
         }
         dprintf("--- publish loop done\n");
-        ack(0,"OK");
         
         // rebuild the topics topic if we made a new one
         if(isnew)

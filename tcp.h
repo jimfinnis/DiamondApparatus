@@ -173,7 +173,10 @@ public:
                     return true; // must be 
                 }
             }
-            if(isForceExit)return false;
+            if(isForceExit){
+                dprintf("Force exit.\n");
+                return false;
+            }
         }
         return rv;
     }

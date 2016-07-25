@@ -29,19 +29,19 @@ static pthread_cond_t getcond = PTHREAD_COND_INITIALIZER;
 static bool volatile running=false;
 
 inline void lock(const char *n){
-    dprintf("+++Attemping to lock: %s\n",n);
+    dprintf("+++ %p Attemping to lock: %s\n",(void *)pthread_self(),n);
     pthread_mutex_lock(&mutex);
+    dprintf("    %p Locked\n",(void *)pthread_self());
 }
 inline void unlock(const char *n){
-    dprintf("---Unlocking: %s\n",n);
+    dprintf("--- %p Unlocking: %s\n",(void *)pthread_self(),n);
     pthread_mutex_unlock(&mutex);
 }
 
 
 // the states the client can be in
 enum ClientState {
-    ST_IDLE,
-    ST_AWAITACK
+    ST_IDLE // only one state at the moment, but may add more.
 };
 class MyClient : public TCPClient {
     ClientState state;
@@ -81,11 +81,15 @@ public:
     virtual void process(uint32_t packetsize,void *packet){
         lock("msgrecv");
         char *p = (char *)packet;
-        SCAck *ack;
         uint32_t type = ntohl(*(uint32_t *)p);
         dprintf("Packet type %d at %p\n",type,packet);
         
         if(type == SC_KILLCLIENT){
+            if(waittopic){
+                dprintf("Waiting on %s so signalling\n",waittopic);
+                pthread_cond_signal(&getcond);
+                waittopic=NULL;
+            }
             fprintf(stderr,"force exit\n");
             running=false;
         }
@@ -95,17 +99,6 @@ public:
             if(type == SC_NOTIFY){
                 notify(p);
             }
-            break;
-        case ST_AWAITACK:
-            ack = (SCAck *)p;
-            if(type != SC_ACK)
-                throw "unexpected packet in awaiting ack";
-            else if(ack->code){
-                dprintf("Ack code %d: %s\n",ntohs(ack->code),ack->msg);
-                throw "bad code from ack";
-            } else
-                dprintf("Acknowledged\n");
-            setState(ST_IDLE);
             break;
         }
         unlock("msgrecv");
@@ -122,8 +115,6 @@ public:
         p.type = htonl(CS_SUBSCRIBE);
         strcpy(p.msg,name);
         request(&p,sizeof(StrMsg));
-        //TODO - ADD TIMEOUT
-        setState(ST_AWAITACK);
         unlock("subscribe");
     }
     
@@ -132,8 +123,6 @@ public:
         int size;
         const char *p = d.toMessage(&size,CS_PUBLISH,name);
         request(p,size);
-        //TODO - ADD TIMEOUT
-        setState(ST_AWAITACK);
         free((void *)p);
         unlock("publish");
     }
@@ -220,13 +209,11 @@ void destroy(){
 void subscribe(const char *n){
     if(!running)throw DiamondException("not connected");
     client->subscribe(n);
-    waitForIdle(); // wait for the ack
 }
 
 void publish(const char *name,Topic& t){
     if(!running)throw DiamondException("not connected");
     client->publish(name,t);
-    waitForIdle(); // wait for the ack
 }
 
 void killServer(){
@@ -261,18 +248,28 @@ Topic get(const char *n,int wait){
     // we are connected and subscribed to this topic
     
     Topic *t = tm[n];
+    client->waittopic=NULL;
     if(t->state == Topic::NoData){
         // if WaitAny, wait for data
-        if(wait == GetWaitAny){
+        if(wait == GetWaitAny || wait == GetWaitNew){
             dprintf("No data present : entering wait\n");
             while(t->state == Topic::NoData){
                 client->waittopic = n;
                 // stalls until new data arrives, but unlocks mutex
+                // during the wait and relocks it after.
                 pthread_cond_wait(&getcond,&mutex);
+                client->waittopic=NULL;
+                if(!running){
+                    // in this case, forced exit killed the thread
+                    rv.state = Topic::NotConnected;
+                    unlock("gettopic");
+                    return rv;
+                }
                 dprintf("Data apparently arrived!\n");
             }
             // should now have data and mutex locked again
         } else {
+            unlock("gettopic");
             rv.state = Topic::NotFound;
             return rv;
         }
@@ -281,7 +278,15 @@ Topic get(const char *n,int wait){
         while(t->state != Topic::Changed){
             client->waittopic = n;
             // stalls until new data arrives, but unlocks mutex
+            // during the wait and relocks it after.
             pthread_cond_wait(&getcond,&mutex);
+            client->waittopic=NULL;
+            if(!running){
+                // in this case, forced exit killed the thread
+                rv.state = Topic::NotConnected;
+                unlock("gettopic");
+                return rv;
+            }
         }
         // should now have data and mutex locked again
     }

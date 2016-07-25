@@ -21,8 +21,6 @@ namespace diamondapparatus {
 #define CS_CLEARSERVER 4
 
 // server to client
-// data - SCAck
-#define SC_ACK 10
 // data - Data
 #define SC_NOTIFY 20
 // data - NoDataMsg
@@ -30,12 +28,6 @@ namespace diamondapparatus {
 
 struct NoDataMsg {
     uint32_t type;
-};
-
-struct SCAck {
-    uint32_t type; // SC_ACK
-    uint16_t code;
-    char msg[256];
 };
 
 struct StrMsg {
