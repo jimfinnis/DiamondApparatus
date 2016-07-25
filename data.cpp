@@ -6,6 +6,7 @@
 
 #include "data.h"
 #include "diamondapparatus.h"
+#include "time.h"
 #include <arpa/inet.h>
 
 /*
@@ -130,4 +131,11 @@ uint32_t Topic::fromMessage(const char *p,char *namebuf){
         }
         d.push_back(t);
     }
+}
+
+double Topic::age(){
+    if(timeLastSet<0)
+        return -1;
+    else
+        return Time::now() - timeLastSet;
 }

@@ -12,6 +12,7 @@
 #include "tcp.h"
 #include "messages.h"
 #include "data.h"
+#include "time.h"
 
 namespace diamondapparatus {
 
@@ -65,6 +66,7 @@ public:
         Topic *t = topics[name];
         t->fromMessage(d);
         t->state =Topic::Changed;
+        t->timeLastSet = Time::now();
         
         // if we were waiting for this, signal.
         if(waittopic && !strcmp(name,waittopic)){
@@ -239,14 +241,25 @@ Topic get(const char *n,int wait){
         return rv;
     }
     
-    lock("gettopic");
     if(topics.find(n) == topics.end()){
+        // topic not subscribed to
+        rv.state = Topic::NotFound;
+        return rv;
+    }
+    
+    // we are connected and subscribed to this topic
+    
+    lock("gettopic");
+    Topic *t = topics[n];
+    if(t->state == Topic::NoData){
         // if WaitAny, wait for data
         if(wait == GetWaitAny){
-            while(topics.find(n) == topics.end()){
+            dprintf("No data present : entering wait\n");
+            while(t->state == Topic::NoData){
                 client->waittopic = n;
                 // stalls until new data arrives, but unlocks mutex
                 pthread_cond_wait(&getcond,&mutex);
+                dprintf("Data apparently arrived!\n");
             }
             // should now have data and mutex locked again
         } else {
@@ -255,14 +268,13 @@ Topic get(const char *n,int wait){
         }
     }
     if(wait == GetWaitNew){
-        while(topics[n]->state != Topic::Changed){
+        while(t->state != Topic::Changed){
             client->waittopic = n;
             // stalls until new data arrives, but unlocks mutex
             pthread_cond_wait(&getcond,&mutex);
         }
         // should now have data and mutex locked again
     }
-    Topic *t = topics[n];
     rv = *t;
     t->state = Topic::Unchanged;
     unlock("gettopic");

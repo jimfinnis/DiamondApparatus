@@ -95,8 +95,15 @@ class Topic {
     friend class MyClient;
 private:
     std::vector<Datum> d;
-public:    
+    double timeLastSet; // time of last update (used on client only)
+public:
     
+    Topic(){
+        state = NoData;
+        timeLastSet=-1;
+    }  
+    
+    static const int NoData=0;
     static const int Unchanged=1;
     static const int Changed=2;
     static const int NotFound=3;
@@ -123,6 +130,13 @@ public:
         d.clear();
     }
     
+    void dump(){
+        for(int i=0;i<size();i++){
+            d[i].dump();
+        }
+    }
+                  
+    
     /// does the topic actually contain valid data?
     bool isValid(){
         return (state == Unchanged || state == Changed);
@@ -143,6 +157,10 @@ public:
     /// this reads the name from the message without doing
     /// anything else
     static const char *getNameFromMsg(const char *p);
+    
+    /// return the age - i.e. the time since we last got data
+    /// on this topic - or -1 if no data has ever been received.
+    double age();
 };
 
 }

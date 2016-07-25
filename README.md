@@ -106,11 +106,15 @@ attempt is made to access an out of range datum, a float zero datum will be retu
 - **add(const Datum&)** adds a datum
 - **clear()** empties the topic
 - the **state** member contains the state of the topic.
+- **double age()** returns the number of seconds since data was received
+on this topic.
+- **dump()** will print the topic's data as a list of lines to stdout.
 
 ### Topic states
 as set in topic copies returned from **get()**:
 - **Topic::NotConnected** - the client is not connected and this topic contains no data
-- **Topic::NotFound** - no data has yet been received for this topic.
+- **Topic::NotFound** - we have not subscribed to this topic.
+- **Topic::NoData** - no data has yet been received for this topic.
 - **Topic::Unchanged** - the topic is unchanged since **get()** was last called on it.
 - **Topic::Changed** - the topic has changed since **get()** was last called.
 
@@ -134,5 +138,13 @@ default values will be returned:
 subscribe("foo");
 Topic t = get("foo",GetWaitAny);
 printf("%s\n",t[0].s());
+}   
+```
+Additionally, like a topic, a Datum has a **dump()** call to write
+to standard out:
+```c++
+subscribe("foo");
+Topic t = get("foo",GetWaitAny);
+t[0].dump();
 }   
 ```

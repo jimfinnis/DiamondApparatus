@@ -22,7 +22,6 @@ class MyServer : public TCPServer {
     std::map<std::string,std::list<int> > subscribers;
     // lists of topics for each subscriber
     std::map<int,std::list<std::string> > subtopics;
-    
     std::map<std::string,Topic *> topics;
     
     Topic *findOrCreateTopic(const char *n){
