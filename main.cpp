@@ -41,7 +41,7 @@ int main(int argc,char *argv[]){
         exit(0);
     }
     
-    if(!strcmp("version")){
+    if(!strcmp(argv[1],"version")){
         printf("Diamond Apparatus %d (%s)\n",VERSION,VERSIONNAME);
         exit(0);
     }
