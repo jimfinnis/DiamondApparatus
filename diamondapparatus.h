@@ -13,8 +13,8 @@
 
 #include "data.h"
 
-#define VERSION 100
-#define VERSIONNAME "Malachite Territory"
+#define VERSION 101
+#define VERSIONNAME "Steel Word"
 
 namespace diamondapparatus {
 

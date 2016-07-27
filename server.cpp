@@ -5,7 +5,7 @@
  */
 
 #include <signal.h>
-#include <list>
+#include <set>
 #include <string>
 
 #include "tcp.h"
@@ -19,9 +19,9 @@ static bool serverKill=false;
 
 class MyServer : public TCPServer {
     // lists of subscribers to each topic
-    std::map<std::string,std::list<int> > subscribers;
+    std::map<std::string,std::set<int> > subscribers;
     // lists of topics for each subscriber
-    std::map<int,std::list<std::string> > subtopics;
+    std::map<int,std::set<std::string> > subtopics;
     std::map<std::string,Topic *> topics;
     
     Topic *findOrCreateTopic(const char *n){
@@ -45,8 +45,12 @@ class MyServer : public TCPServer {
     }
     
     void subscribe(int fd,const char *n){
-        subscribers[std::string(n)].push_back(fd);
-        subtopics[fd].push_back(std::string(n));
+        std::string name(n);
+        subscribers[name].insert(fd);
+        
+        std::set<std::string>& subtoplist = subtopics[fd];
+        subtoplist.insert(name);
+        
         printf("--- added %d to subs for %s\n",fd,n);
         
         // now send any data we already have for that topic
@@ -62,12 +66,12 @@ class MyServer : public TCPServer {
     void unsubscribe(int fd){
         printf("---- removing %d from subs\n",fd);
         // get the list of topics this FD subscribes to
-        std::list<std::string> &topics = subtopics[fd];
+        std::set<std::string> &topics = subtopics[fd];
         // iterate over them
-        std::list<std::string>::iterator i;
+        std::set<std::string>::iterator i;
         for(i=topics.begin();i!=topics.end();++i){
             // for each one, remove this FD from its subscriber list
-            subscribers[*i].remove(fd);
+            subscribers[*i].erase(fd);
         }
         // finally, remove me from the subtopics map
         subtopics.erase(fd);
@@ -76,12 +80,12 @@ class MyServer : public TCPServer {
     void deletetopic(const char *n){
         std::string str(n);
         // get the list of subscribers to this topic
-        std::list<int>& subs = subscribers[str];
-        std::list<int>::iterator i;
+        std::set<int>& subs = subscribers[str];
+        std::set<int>::iterator i;
         for(i=subs.begin();i!=subs.end();++i){
             // remove it from the list of subscribed topics
             // for each subscriber
-            subtopics[*i].remove(str);
+            subtopics[*i].erase(str);
         }
         // erase me...
         subscribers.erase(str);
@@ -108,8 +112,8 @@ class MyServer : public TCPServer {
         NoDataMsg *d = (NoDataMsg *)p;
         d->type = htonl(SC_NOTIFY); // overwrite pkt type
         // get the list of subscribers to this topic
-        std::list<int>& subs = subscribers[name];
-        std::list<int>::iterator i;
+        std::set<int>& subs = subscribers[name];
+        std::set<int>::iterator i;
         dprintf("--- publish loop for %s\n",name);
         for(i=subs.begin();i!=subs.end();++i){
             printf("----Sending to %d\n",*i);
