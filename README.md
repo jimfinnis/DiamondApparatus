@@ -68,11 +68,15 @@ set the port number.
 Initialises a client connection to the server, and is required for
 all other functions except **server()**. This starts the client thread, which
 constantly waits for messages. See above for how to change the host
-and port for the server.
+and port for the server. Running init() twice has no effect, EXCEPT
+that destroy() must be called as many times as init() is run.
+(Internally, init() increments a counter and destroy() decrements it -
+if the counter goes down to zero, destroy() does its job.)
 
 ### destroy()
 Closes down the client connection politely and should be called
 when the code exits. Does so by killing the thread and closing the socket.
+See init() above for what happens with more than one init() or destroy().
 
 ### subscribe(const char *name)
 Subscribes to a topic of a given name. This can then be checked

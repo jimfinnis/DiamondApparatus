@@ -187,23 +187,30 @@ static void waitForIdle(){
  * 
  */
 
+static int initCount=0;
+
 void init(){
     // get environment data or defaults
-    const char *hn = getenv("DIAMOND_HOST");
-    char *hostname = NULL;
-    if(hn)hostname = strdup(hn);
-    const char *pr = getenv("DIAMOND_PORT");
-    int port = pr?atoi(pr):DEFAULTPORT;
-    client = new MyClient(hostname?hostname:"localhost",port);
-    pthread_create(&thread,NULL,threadfunc,NULL);
-    if(hostname)free(hostname);
-    while(!running){} // wait for thread
+    if(!initCount){
+        const char *hn = getenv("DIAMOND_HOST");
+        char *hostname = NULL;
+        if(hn)hostname = strdup(hn);
+        const char *pr = getenv("DIAMOND_PORT");
+        int port = pr?atoi(pr):DEFAULTPORT;
+        client = new MyClient(hostname?hostname:"localhost",port);
+        pthread_create(&thread,NULL,threadfunc,NULL);
+        if(hostname)free(hostname);
+        while(!running){} // wait for thread
+    }
+    initCount++;
 }    
 
 void destroy(){
-    running=false;// assume atomic :)
-    pthread_cond_destroy(&getcond);
-    pthread_mutex_destroy(&mutex);
+    if(--initCount){
+        running=false;// assume atomic :)
+        pthread_cond_destroy(&getcond);
+        pthread_mutex_destroy(&mutex);
+    }
 }
 
 void subscribe(const char *n){
