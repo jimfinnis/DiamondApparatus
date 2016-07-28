@@ -13,8 +13,6 @@
 #include <stdio.h>
 #include <vector>
 
-#define DT_FLOAT 0
-#define DT_STRING 1
 
 namespace diamondapparatus {
 
@@ -73,6 +71,10 @@ struct Datum {
             printf("%s\n",d.s);
             break;
         }
+    }
+    
+    uint32_t type(){
+        return t;
     }
     
     void clr(){

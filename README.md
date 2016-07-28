@@ -184,10 +184,11 @@ for(int i=0;i<t.size();i++)
 ## C linkage
 Functions are provided for use from plain C, permitting access
 to error codes without exceptions, and Topics without access
-to the Topic and Datum classes:
+to the Topic and Datum classes. These are also available from
+C++, if you prefer to code this way.
 
 ```C
-// return error string if a function returned -1
+// return error if a function returned -1
 const char *diamondapparatus_error();
 // 0 if OK, -1 on error
 int diamondapparatus_init();
@@ -217,4 +218,8 @@ int diamondapparatus_get(const char *n,int wait);
 const char *diamondapparatus_fetchstring(int n);
 /// read a float from the topic got
 float diamondapparatus_fetchfloat(int n);
+/// get the size of the topic
+int diamondapparatus_fetchsize();
+/// get the size of a datum
+uint32_t diamondapparatus_fetchtype(int n);
 ```

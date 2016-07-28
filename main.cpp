@@ -1,6 +1,7 @@
 /**
  * @file main.cpp
- * @brief  Brief description of file.
+ * @brief The main Diamond Apparatus program, C++ version.
+ * A C version can be found in mainc.c
  *
  */
 

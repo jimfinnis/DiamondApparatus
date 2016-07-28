@@ -14,6 +14,9 @@ target_link_libraries(diamond -lpthread diamondapparatus)
 
 add_executable(test test.cpp)
 target_link_libraries(test -lpthread diamondapparatus)
+
+add_executable(diamondc mainc.c)
+target_link_libraries(diamondc -lpthread diamondapparatus)
     
 install(TARGETS diamond RUNTIME DESTINATION bin)
 install(TARGETS diamondapparatus ARCHIVE DESTINATION lib)
