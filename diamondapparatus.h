@@ -25,6 +25,10 @@
 #define TOPIC_NOTFOUND 3
 #define TOPIC_NOTCONNECTED 4
 
+/////////////// data types
+#define DT_FLOAT 0
+#define DT_STRING 1
+
 
 #define VERSION 101
 #define VERSIONNAME "Steel Word"
@@ -140,10 +144,17 @@ int diamondapparatus_subscribe(const char *n);
 /// read a topic, returning its state or -1. The topic can be accessed
 /// with diamondapparatus_fetch...
 int diamondapparatus_get(const char *n,int wait);
+/// is the last topic got a valid topic to fetch data from?
+int diamondapparatus_isfetchvalid();
+
 /// read a string from the topic got
 const char *diamondapparatus_fetchstring(int n);
 /// read a float from the topic got
 float diamondapparatus_fetchfloat(int n);
+/// get the type of a datum in the topic got
+uint32_t diamondapparatus_fetchtype(int n);
+/// get the number of data in the topic got
+int diamondapparatus_fetchsize();
 
 
 

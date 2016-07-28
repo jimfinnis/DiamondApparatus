@@ -90,13 +90,13 @@ Gets the latest value of a topic, as a new copy to avoid threading problems.
 See below for how to access the data and state. By default, this will
 check the data asynchronously and return immediately. If used in this
 way, the state of the returned topic should be checked for validity
-(with \textbf{Topic::isValid()}). Otherwise, we can wait for new data
+(with **Topic::isValid()**). Otherwise, we can wait for new data
 to arrive or wait for data only if there is no data yet. This is done
-by setting the \textbf{wait} value:
-- **GetWaitAny** waits until the topic contains data, and will not block
+by setting the **wait** value:
+- **GET_WAITANY** waits until the topic contains data, and will not block
 block at all if the topic contains even old data. Use this for routine
 access to topics.
-- **GetWaitNew** waits until new data arrive, and will block if the
+- **GET_WAITNEW** waits until new data arrive, and will block if the
 topic contains no data or old data. Use this to wait for updated data.
 
 
