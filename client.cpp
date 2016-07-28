@@ -68,7 +68,7 @@ public:
         }
         Topic *t = tm[name];
         t->fromMessage(d);
-        t->state =Topic::Changed;
+        t->state =TOPIC_CHANGED;
         t->timeLastSet = Time::now();
         
         // if we were waiting for this, signal.
@@ -142,7 +142,7 @@ public:
         unlock("isidle");
         return e;
     }
-        
+    
 };
 
 
@@ -175,7 +175,7 @@ static void waitForIdle(){
         usleep(100000);
     }
     dprintf("Wait done, running=%s, isidle=%s\n",running?"T":"F",
-           client->isIdle()?"T":"F");
+            client->isIdle()?"T":"F");
 }
 
 
@@ -205,12 +205,13 @@ void init(){
     initCount++;
 }    
 
-void destroy(){
-    if(--initCount){
+int destroy(){
+    if(initCount && --initCount){
         running=false;// assume atomic :)
         pthread_cond_destroy(&getcond);
         pthread_mutex_destroy(&mutex);
     }
+    return initCount;
 }
 
 void subscribe(const char *n){
@@ -239,7 +240,7 @@ bool isRunning(){
 Topic get(const char *n,int wait){
     Topic rv;
     if(!running){
-        rv.state = Topic::NotConnected;
+        rv.state = TOPIC_NOTCONNECTED;
         return rv;
     }
     
@@ -247,7 +248,7 @@ Topic get(const char *n,int wait){
     TopicMap& tm = (TopicMap &)topics; // lose the volatile
     if(tm.find(n) == tm.end()){
         // topic not subscribed to
-        rv.state = Topic::NotFound;
+        rv.state = TOPIC_NOTFOUND;
         unlock("gettopic");
         return rv;
     }
@@ -256,11 +257,11 @@ Topic get(const char *n,int wait){
     
     Topic *t = tm[n];
     client->waittopic=NULL;
-    if(t->state == Topic::NoData){
+    if(t->state == TOPIC_NODATA){
         // if WaitAny, wait for data
-        if(wait == GetWaitAny || wait == GetWaitNew){
+        if(wait == GET_WAITANY || wait == GET_WAITNEW){
             dprintf("No data present : entering wait\n");
-            while(t->state == Topic::NoData){
+            while(t->state == TOPIC_NODATA){
                 client->waittopic = n;
                 // stalls until new data arrives, but unlocks mutex
                 // during the wait and relocks it after.
@@ -268,7 +269,7 @@ Topic get(const char *n,int wait){
                 client->waittopic=NULL;
                 if(!running){
                     // in this case, forced exit killed the thread
-                    rv.state = Topic::NotConnected;
+                    rv.state = TOPIC_NOTCONNECTED;
                     unlock("gettopic");
                     return rv;
                 }
@@ -277,12 +278,12 @@ Topic get(const char *n,int wait){
             // should now have data and mutex locked again
         } else {
             unlock("gettopic");
-            rv.state = Topic::NotFound;
+            rv.state = TOPIC_NOTFOUND;
             return rv;
         }
     }
-    if(wait == GetWaitNew){
-        while(t->state != Topic::Changed){
+    if(wait == GET_WAITANY){
+        while(t->state != TOPIC_CHANGED){
             client->waittopic = n;
             // stalls until new data arrives, but unlocks mutex
             // during the wait and relocks it after.
@@ -290,7 +291,7 @@ Topic get(const char *n,int wait){
             client->waittopic=NULL;
             if(!running){
                 // in this case, forced exit killed the thread
-                rv.state = Topic::NotConnected;
+                rv.state = TOPIC_NOTCONNECTED;
                 unlock("gettopic");
                 return rv;
             }
@@ -298,7 +299,7 @@ Topic get(const char *n,int wait){
         // should now have data and mutex locked again
     }
     rv = *t;
-    t->state = Topic::Unchanged;
+    t->state = TOPIC_UNCHANGED;
     unlock("gettopic");
     return rv;
 }

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 project(DIAMONDAPPARATUS)
 
-set(SOURCES client.cpp server.cpp time.cpp data.cpp)
+set(SOURCES client.cpp server.cpp time.cpp data.cpp clinkage.cpp)
 
 add_library(diamondapparatus ${SOURCES})
 target_link_libraries(diamondapparatus -lpthread)

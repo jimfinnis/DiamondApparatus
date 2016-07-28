@@ -90,7 +90,6 @@ struct Datum {
 
 /// Collection of datums is data. Clearly.
 
-
 class Topic {
     friend class MyClient;
 private:
@@ -99,15 +98,10 @@ private:
 public:
     
     Topic(){
-        state = NoData;
+        state = TOPIC_NODATA;
         timeLastSet=-1;
     }  
     
-    static const int NoData=0;
-    static const int Unchanged=1;
-    static const int Changed=2;
-    static const int NotFound=3;
-    static const int NotConnected=4;
     int state;
     static Datum zeroDat;
     
@@ -139,7 +133,7 @@ public:
     
     /// does the topic actually contain valid data?
     bool isValid(){
-        return (state == Unchanged || state == Changed);
+        return (state == TOPIC_UNCHANGED || state == TOPIC_CHANGED);
     }
     
     /// convert to a message where the first uint32_t is the type,

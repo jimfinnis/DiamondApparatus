@@ -121,11 +121,11 @@ on this topic.
 
 ### Topic states
 as set in topic copies returned from **get()**:
-- **Topic::NotConnected** - the client is not connected and this topic contains no data
-- **Topic::NotFound** - we have not subscribed to this topic.
-- **Topic::NoData** - no data has yet been received for this topic.
-- **Topic::Unchanged** - the topic is unchanged since **get()** was last called on it.
-- **Topic::Changed** - the topic has changed since **get()** was last called.
+- **TOPIC_NOTCONNECTED** - the client is not connected and this topic contains no data
+- **TOPIC_NOTFOUND** - we have not subscribed to this topic.
+- **TOPIC_NODATA** - no data has yet been received for this topic.
+- **TOPIC_UNCHANGED** - the topic is unchanged since **get()** was last called on it.
+- **TOPIC_CHANGED** - the topic has changed since **get()** was last called.
 
 ## Data
 Each individual Datum can be created with a string or float constructor
@@ -145,7 +145,7 @@ default values will be returned:
 
 ```c++
 subscribe("foo");
-Topic t = get("foo",GetWaitAny);
+Topic t = get("foo",GET_WAITANY);
 printf("%s\n",t[0].s());
 }   
 ```
@@ -153,7 +153,7 @@ Additionally, like a topic, a Datum has a **dump()** call to write
 to standard out:
 ```c++
 subscribe("foo");
-Topic t = get("foo",GetWaitAny);
+Topic t = get("foo",GET_WAITANY);
 t[0].dump();
 }   
 ```
@@ -173,10 +173,48 @@ subscribe(argv[2]);
 
 // wait for any data on that topic
 
-Topic t = get(argv[2],GetWaitAny);
+Topic t = get(argv[2],GET_WAITANY);
 
 // the data has arrived, print out each datum in the topic
 
 for(int i=0;i<t.size();i++)
     t[i].dump();
+```
+
+## C linkage
+Functions are provided for use from plain C, permitting access
+to error codes without exceptions, and Topics without access
+to the Topic and Datum classes:
+
+```C
+// return error string if a function returned -1
+const char *diamondapparatus_error();
+// 0 if OK, -1 on error
+int diamondapparatus_init();
+// 0 if OK, -1 on error
+int diamondapparatus_server();
+// will return -1 in error, >0 if not last destroy, and 0 if did actually
+// shutdown
+int diamondapparatus_isrunning();
+int diamondapparatus_destroy();
+int diamondapparatus_killserver();
+int diamondapparatus_clearserver();
+/// publish the topic built up by diamondapparatus_add..()
+int diamondapparatus_publish(const char *n);
+/// clear the topic to publish
+void diamondapparatus_newtopic();
+/// add a float to the topic to publish
+void diamondapparatus_addfloat(float f);
+/// add a string to the topic to publish
+void diamondapparatus_addstring(const char *s);
+
+
+int diamondapparatus_subscribe(const char *n);
+/// read a topic, returning its state or -1. The topic can be accessed
+/// with diamondapparatus_fetch...
+int diamondapparatus_get(const char *n,int wait);
+/// read a string from the topic got
+const char *diamondapparatus_fetchstring(int n);
+/// read a float from the topic got
+float diamondapparatus_fetchfloat(int n);
 ```

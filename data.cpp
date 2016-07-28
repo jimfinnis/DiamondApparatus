@@ -4,7 +4,6 @@
  *
  */
 
-#include "data.h"
 #include "diamondapparatus.h"
 #include "time.h"
 #include <arpa/inet.h>

@@ -62,7 +62,7 @@ int main(int argc,char *argv[]){
             init();
             subscribe(argv[2]);
             while(isRunning()){
-                Topic t = get(argv[2],GetWaitNew);
+                Topic t = get(argv[2],GET_WAITNEW);
                 for(int i=0;i<t.size();i++)
                     t[i].dump();
             }
@@ -75,7 +75,7 @@ int main(int argc,char *argv[]){
                 usagepanic();
             init();
             subscribe(argv[2]);
-            Topic t = get(argv[2],GetWaitAny);
+            Topic t = get(argv[2],GET_WAITANY);
             for(int i=0;i<t.size();i++)
                 t[i].dump();
         } catch(DiamondException e){
