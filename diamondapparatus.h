@@ -97,6 +97,9 @@ void publish(const char *name,Topic& d);
 /// get the a copy of a topic as it currently is.
 Topic get(const char *n,int wait=0);
 
+/// wait for a message on any topic we are subscribed to 
+void waitForAny();
+
 /// returns false when the client loop has quit (i.e. the server
 /// has died)
 bool isRunning();
@@ -146,6 +149,8 @@ int diamondapparatus_subscribe(const char *n);
 int diamondapparatus_get(const char *n,int wait);
 /// is the last topic got a valid topic to fetch data from?
 int diamondapparatus_isfetchvalid();
+/// wait for a message on any topic we are subscribed to 
+int waitforany();
 
 /// read a string from the topic got
 const char *diamondapparatus_fetchstring(int n);

@@ -56,6 +56,7 @@ public:
     }
     
     // the topic I'm waiting for in get(), if any.
+    // If I'm waiting for any topic, this will be the empty string.
     const char *waittopic;
     
     void notify(const char *d){
@@ -71,8 +72,8 @@ public:
         t->state =TOPIC_CHANGED;
         t->timeLastSet = Time::now();
         
-        // if we were waiting for this, signal.
-        if(waittopic && !strcmp(name,waittopic)){
+        // if we were waiting for this topic, or for any topic, signal.
+        if(waittopic && (!*waittopic || !strcmp(name,waittopic))){
             pthread_cond_signal(&getcond);
             waittopic=NULL; // and zero the wait topic.
         }
@@ -304,4 +305,18 @@ Topic get(const char *n,int wait){
     return rv;
 }
 
+/// wait for any subscribed topic
+void waitForAny(){
+    lock("wait");
+    client->waittopic = ""; // empty string means any
+    // stalls until new data arrives, but unlocks mutex
+    // during the wait and relocks it after.
+    pthread_cond_wait(&getcond,&mutex);
+    client->waittopic=NULL;
+    unlock("wait");
 }
+
+}
+    
+
+

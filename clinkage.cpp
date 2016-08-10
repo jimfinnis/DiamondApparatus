@@ -104,6 +104,17 @@ int diamondapparatus_clearserver(){
     } 
 }
 
+int diamondapparatus_waitforany(){
+    try {
+        inerror = false;
+        waitForAny();
+    } catch (DiamondException e){
+        exception = e;
+        inerror = true;
+        return -1;
+    } 
+}
+
 int diamondapparatus_isrunning(){
     return isRunning()?1:0;
 }
