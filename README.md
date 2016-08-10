@@ -218,8 +218,8 @@ int diamondapparatus_get(const char *n,int wait);
 const char *diamondapparatus_fetchstring(int n);
 /// read a float from the topic got
 float diamondapparatus_fetchfloat(int n);
-/// get the size of the topic
-int diamondapparatus_fetchsize();
-/// get the size of a datum
+/// get the type of a datum in the topic got
 uint32_t diamondapparatus_fetchtype(int n);
+/// get the number of data in the topic got
+int diamondapparatus_fetchsize();
 ```
