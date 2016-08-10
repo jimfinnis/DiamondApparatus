@@ -137,7 +137,7 @@ public:
         
         
         uint32_t type = ntohl(*(uint32_t *)p);
-        printf("Packet type %d\n",type);
+//        printf("Packet type %d\n",type);
         
         switch(type){
         case CS_PUBLISH:
