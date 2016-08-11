@@ -42,6 +42,19 @@ class MyServer : public TCPServer {
         for(i=topics.begin();i!=topics.end();++i){
             t->add(Datum(i->first.c_str()));
         }
+        // and publish it.
+        int pktsize;
+        const char *p = t->toMessage(&pktsize,SC_NOTIFY,"topics");
+        
+        // get the list of subscribers to this topic
+        std::set<int>& subs = subscribers["topics"];
+        std::set<int>::iterator i2;
+        dprintf("--- publish loop for topics\n");
+        for(i2=subs.begin();i2!=subs.end();++i2){
+            printf("----Sending to %d\n",*i2);
+            basesend(*i2,p,pktsize);
+        }
+        dprintf("--- publish loop done\n");
     }
     
     void subscribe(int fd,const char *n){

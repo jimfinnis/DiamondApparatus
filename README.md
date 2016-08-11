@@ -99,6 +99,8 @@ access to topics.
 - **GET_WAITNEW** waits until new data arrive, and will block if the
 topic contains no data or old data. Use this to wait for updated data.
 
+### waitForAny()
+Waits for new data on any topic to which the client is subscribed.
 
 ### killServer()
 Sends a message to the server to kill itself.
@@ -214,6 +216,10 @@ int diamondapparatus_subscribe(const char *n);
 /// read a topic, returning its state or -1. The topic can be accessed
 /// with diamondapparatus_fetch...
 int diamondapparatus_get(const char *n,int wait);
+/// is the last topic got a valid topic to fetch data from?
+int diamondapparatus_isfetchvalid();
+/// wait for a message on any topic we are subscribed to 
+int waitforany();
 /// read a string from the topic got
 const char *diamondapparatus_fetchstring(int n);
 /// read a float from the topic got

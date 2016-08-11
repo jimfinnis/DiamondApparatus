@@ -258,6 +258,7 @@ Topic get(const char *n,int wait){
     
     Topic *t = tm[n];
     client->waittopic=NULL;
+    dprintf("Topic state: %d\n",t->state);
     if(t->state == TOPIC_NODATA){
         // if WaitAny, wait for data
         if(wait == GET_WAITANY || wait == GET_WAITNEW){
@@ -282,8 +283,8 @@ Topic get(const char *n,int wait){
             rv.state = TOPIC_NOTFOUND;
             return rv;
         }
-    }
-    if(wait == GET_WAITANY){
+    } else if(wait == GET_WAITNEW){
+        dprintf("Entering waitnew\n");
         while(t->state != TOPIC_CHANGED){
             client->waittopic = n;
             // stalls until new data arrives, but unlocks mutex
@@ -299,6 +300,7 @@ Topic get(const char *n,int wait){
         }
         // should now have data and mutex locked again
     }
+    dprintf("Data unchanged\n");
     rv = *t;
     t->state = TOPIC_UNCHANGED;
     unlock("gettopic");

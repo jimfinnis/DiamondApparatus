@@ -16,7 +16,7 @@
 // wait for NEW data
 #define GET_WAITNEW 1
 // wait for ANY data
-#define GET_WAITANY 1
+#define GET_WAITANY 2
 
 /////////////// topic states
 #define TOPIC_NODATA 0
