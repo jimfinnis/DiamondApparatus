@@ -1,0 +1,15 @@
+Clearly an obvious speedup is to make the topics use integer ids
+in all messages, so..
+
+CS_SUBSCRIBE takes a string, but is responded to with an ack containing
+the ID for the topic (the server will allocate one for each new topic).
+The client has its own map of ids->names. subscribe() on the client
+side returns the id, so a waitany loop might go
+
+    int idFoo = subscribe("foo");
+    Topic t = get(GET_WAITANY);
+    if(t.id == idFoo){
+        ...
+    }
+
+SC_NOTIFY will contain the ID of the topic.
