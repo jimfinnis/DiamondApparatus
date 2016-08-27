@@ -52,6 +52,11 @@ will exit. It can be killed with the usual signals.
 ### diamond version
 Will print the current version number and name, and exit.
 
+### diamond check
+Just checks to see if the server is alive, silently exiting with
+return code 0 if it is and failing with return code 1 if not. Useful
+in scripts. The server also does this, so two servers don't run.
+
 ## Special topics
 The server publishes several special topics to which other programs
 can subscribe. These are:

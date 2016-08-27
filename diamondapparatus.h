@@ -30,8 +30,8 @@
 #define DT_STRING 1
 
 
-#define VERSION 102
-#define VERSIONNAME "Yellow Zinc"
+#define VERSION 103
+#define VERSIONNAME "Red Tabletop"
 
 #ifdef __cplusplus
 

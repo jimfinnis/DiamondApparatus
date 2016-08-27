@@ -48,12 +48,28 @@ int main(int argc,char *argv[]){
     
     
     if(!strcmp(argv[0],"server")){
+        // first, try to connect, expecting an exception: there
+        // should be no server
         try {
-            if(daemonizeServer)
-                daemon(0,0);
+            init();
+            // only get here if there is a server. Rude, this code.
+            fprintf(stderr,"Server already running.\n");
+            exit(1);
+        } catch(DiamondException e){
+            // ignore exception
+        }
+        // now start the server, daemonizing first if required.
+        try {
+            if(daemonizeServer){
+                if(daemon(0,0)){
+                    fprintf(stderr,"Failed to daemonize.\n");
+                    exit(1);
+                }
+            }
             server();
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
+            exit(1);
         }
         exit(0);
     }
@@ -72,8 +88,11 @@ int main(int argc,char *argv[]){
     signal(SIGINT,handler);
     signal(SIGQUIT,handler);
     
-    if(!strcmp(argv[0],"listen")){
-        try {
+    try {
+        if(!strcmp(argv[0],"check")){
+            // just try to connect
+            init();
+        } else if(!strcmp(argv[0],"listen")){
             if(argc<2)
                 usagepanic();
             init();
@@ -83,11 +102,7 @@ int main(int argc,char *argv[]){
                 for(int i=0;i<t.size();i++)
                     t[i].dump();
             }
-        } catch(DiamondException e){
-            fprintf(stderr,"Failed: %s\n",e.what());
-        }
-    } else if(!strcmp(argv[0],"show")){
-        try {
+        } else if(!strcmp(argv[0],"show")){
             if(argc<2)
                 usagepanic();
             init();
@@ -95,12 +110,7 @@ int main(int argc,char *argv[]){
             Topic t = get(argv[1],GET_WAITANY);
             for(int i=0;i<t.size();i++)
                 t[i].dump();
-        } catch(DiamondException e){
-            fprintf(stderr,"Failed: %s\n",e.what());
-        }
-        
-    } else if(!strcmp(argv[0],"pub")){
-        try{
+        } else if(!strcmp(argv[0],"pub")){
             init();
             if(argc<4)
                 usagepanic();
@@ -122,22 +132,20 @@ int main(int argc,char *argv[]){
             }
             
             publish(name,t);
-        } catch(DiamondException e){
-            fprintf(stderr,"Failed: %s\n",e.what());
-        }
-    } else if(!strcmp(argv[0],"kill")){
-        try{
+        } else if(!strcmp(argv[0],"kill")){
             init();
             killServer();
-        } catch(DiamondException e){
-            fprintf(stderr,"Failed: %s\n",e.what());
-        }
-        
-    } else
-        usagepanic();
+        } else
+            usagepanic();
+    } catch(DiamondException e){
+        fprintf(stderr,"Failed: %s\n",e.what());
+        destroy();
+        exit(1);
+    }
+    
     
     // destroy the client which logically must have been init()ed 
     // at this point.
     destroy();
-    
+    return 0;
 }
