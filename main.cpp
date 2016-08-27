@@ -28,13 +28,29 @@ void handler(int sig){
 
 
 int main(int argc,char *argv[]){
+    char c;
+    bool daemonizeServer=false;
+    while((c=getopt(argc,argv,"d"))!=-1){
+        switch(c){
+        case 'd':
+            daemonizeServer=true;
+            break;
+        }
+    }
     
-    if(argc<2){
+    if(optind>=argc){
         usagepanic();
     }
     
-    if(!strcmp(argv[1],"server")){
+    // consume args
+    argv+=optind;
+    argc-=optind;
+    
+    
+    if(!strcmp(argv[0],"server")){
         try {
+            if(daemonizeServer)
+                daemon(0,0);
             server();
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
@@ -42,7 +58,7 @@ int main(int argc,char *argv[]){
         exit(0);
     }
     
-    if(!strcmp(argv[1],"version")){
+    if(!strcmp(argv[0],"version")){
         printf("Diamond Apparatus %d (%s)\n",VERSION,VERSIONNAME);
         exit(0);
     }
@@ -56,41 +72,41 @@ int main(int argc,char *argv[]){
     signal(SIGINT,handler);
     signal(SIGQUIT,handler);
     
-    if(!strcmp(argv[1],"listen")){
+    if(!strcmp(argv[0],"listen")){
         try {
-            if(argc<3)
+            if(argc<2)
                 usagepanic();
             init();
-            subscribe(argv[2]);
+            subscribe(argv[1]);
             while(isRunning()){
-                Topic t = get(argv[2],GET_WAITNEW);
+                Topic t = get(argv[1],GET_WAITNEW);
                 for(int i=0;i<t.size();i++)
                     t[i].dump();
             }
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
         }
-    } else if(!strcmp(argv[1],"show")){
+    } else if(!strcmp(argv[0],"show")){
         try {
-            if(argc<3)
+            if(argc<2)
                 usagepanic();
             init();
-            subscribe(argv[2]);
-            Topic t = get(argv[2],GET_WAITANY);
+            subscribe(argv[1]);
+            Topic t = get(argv[1],GET_WAITANY);
             for(int i=0;i<t.size();i++)
                 t[i].dump();
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
         }
         
-    } else if(!strcmp(argv[1],"pub")){
+    } else if(!strcmp(argv[0],"pub")){
         try{
             init();
-            if(argc<5)
+            if(argc<4)
                 usagepanic();
-            char *name = argv[2];
-            char *types = argv[3];
-            int argidx=4;
+            char *name = argv[1];
+            char *types = argv[2];
+            int argidx=3;
             Topic t;
             while(char c = *types++){
                 if(argc==argidx)
@@ -109,7 +125,7 @@ int main(int argc,char *argv[]){
         } catch(DiamondException e){
             fprintf(stderr,"Failed: %s\n",e.what());
         }
-    } else if(!strcmp(argv[1],"kill")){
+    } else if(!strcmp(argv[0],"kill")){
         try{
             init();
             killServer();
