@@ -20,7 +20,9 @@ The main program can be used to run the server, listen for changes,
 publish new data, and kill the server.
 
 ### diamond server
-This will run the server and never exit.
+This will run the server and never exit. With the -d option, the
+server will daemonize itself (detach from the terminal and run
+in the background).
 
 ### diamond kill
 This will kill the server and disconnect all subscribers. They will
