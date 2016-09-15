@@ -1,0 +1,103 @@
+package graph
+
+[`time,`sdl,`diamond] each {i library drop}
+
+:init
+    "wibble" 600 600 sdl$open 
+    "/usr/share/fonts/opentype/freefont/FreeSans.otf"
+    15 sdl$openfont !Font
+
+    2 !Interval
+    [] !Graphs
+;
+
+
+:addgraph |t,n,x,y,w,h,timestep,col:recip,rng,points,ptct,lasttime,mn,mx,tex|
+    :"topic, index of data in topic, x,y,w,h, min interval,colour"
+    ?Interval isnone if 
+        "not initialised yet" `ex$diamond throw
+    then
+    
+    time$now !lasttime
+    ?w ?Interval / !ptct
+    ?ptct.
+    0 ?ptct range !rng    
+    [] !points
+    ?t diamond$subscribe
+    ?t ?Font sdl$maketext !tex
+    
+    [%
+     `poll (|:d,v|
+         ?t diamond$getnowait !d
+         ?d isnone not if
+             ?n ?d get !v
+             time$now ?lasttime - ?timestep > if
+                 ?recip isnone if
+                     ?v !mn
+                     ?v 0.00001 + !mx
+                     ?mx tofloat ?mn - 1.0 swap / !recip
+                 else
+                     ?v ?mn < if ?v !mn then
+                     ?v ?mx > if ?v !mx then
+                     ?mx tofloat ?mn - 1.0 swap / !recip
+                 then
+                 time$now !lasttime
+                 ?v tofloat ?mn - ?recip * 1.0 swap -
+                 ?h * ?y + ?points push
+                 ?points len ?ptct > if
+                     ?points shift drop
+                 then
+             then
+         then
+     ),
+     `draw
+     (|:x2,y2,it,t2|
+         ?x ?w + !x2 ?y ?h + !y2
+         ?sdl$col
+         <<[255,255,255,255]>> !sdl$col
+         ?x ?y 15 - none none ?tex sdl$blit
+         ?mn tostr ?Font sdl$maketext !t2
+         ?x 2+ ?y2 15- none none ?t2 sdl$blit
+         ?mx tostr ?Font sdl$maketext !t2
+         ?x 2+ ?y none none ?t2 sdl$blit
+         <<[128,128,128,255]>> !sdl$col
+         ?x ?y ?x2 ?y sdl$line
+         ?x ?y ?x ?y2 sdl$line
+         ?x ?y2 ?x2 ?y2 sdl$line
+         ?x2 ?y ?x2 ?y2 sdl$line
+         ?points mkiter !it
+         ?col !sdl$col
+         ?rng each {
+             ?it idone ifleave
+             i ?Interval * ?x + ?it icur
+             1 1 sdl$fillrect
+             ?it inext
+         }
+         !sdl$col
+     )
+     ]
+     dup ?Graphs push
+ ;
+ 
+(chr
+    <<[%
+     "q" (sdl$done)
+     ]>> get@
+) sdl$onkeydown
+
+
+(
+    sdl$clear
+    ?Graphs each{i?`draw@}
+    ?Graphs each{i?`poll@}
+    sdl$flip
+) sdl$ondraw
+
+:run sdl$loop quit;
+
+# this is an example of usage.
+
+init
+"dat" 0 20 20 300 100 0.1 <<[255,255,255,255]>> addgraph !F
+"dat" 1 20 140 300 100 0.1 <<[255,255,255,255]>> addgraph !G
+run

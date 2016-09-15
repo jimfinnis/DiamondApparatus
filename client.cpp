@@ -48,6 +48,7 @@ class MyClient : public TCPClient {
 public:
     MyClient(const char *host,int port) : TCPClient(host,port){
         state = ST_IDLE;
+        waittopic=NULL;
     }
     
     void setState(ClientState s){
