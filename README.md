@@ -92,7 +92,7 @@ for new data with **get()**, which has options to wait for data.
 ### publish(const char *name, Topic& t)
 Publishes data to a topic.
 
-### Topic get(const char *n,int wait=0)
+### Topic get(const char *n,int wait=GET_NOWAIT)
 Gets the latest value of a topic, as a new copy to avoid threading problems.
 See below for how to access the data and state. By default, this will
 check the data asynchronously and return immediately. If used in this
@@ -105,6 +105,8 @@ block at all if the topic contains even old data. Use this for routine
 access to topics.
 - **GET_WAITNEW** waits until new data arrive, and will block if the
 topic contains no data or old data. Use this to wait for updated data.
+- **GET_NOWAIT** (default) always returns immediately - you should
+use **isValid()** on the topic to check if data is present yet.
 
 ### waitForAny()
 Waits for new data on any topic to which the client is subscribed.
@@ -121,7 +123,8 @@ Topics, used by **publish()** and **get()**, support the following operations:
 - **size()** returns the size (number of Data)
 - **square brackets** access individual Datum objects (as constant refs). If an
 attempt is made to access an out of range datum, a float zero datum will be returned.
-- **add(const Datum&)** adds a datum
+- **add(const Datum&)** adds a datum (for publishing)
+- **isValid()** returns true if a topic received with **get()** has valid data
 - **clear()** empties the topic
 - the **state** member contains the state of the topic.
 - **double age()** returns the number of seconds since data was received

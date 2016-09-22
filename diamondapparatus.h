@@ -13,6 +13,8 @@
 
 ////////////// wait flags for get()
 
+// never wait
+#define GET_WAITNONE 0
 // wait for NEW data
 #define GET_WAITNEW 1
 // wait for ANY data
@@ -95,7 +97,7 @@ void subscribe(const char *n);
 void publish(const char *name,Topic& d);
 
 /// get the a copy of a topic as it currently is.
-Topic get(const char *n,int wait=0);
+Topic get(const char *n,int wait=GET_WAITNONE);
 
 /// wait for a message on any topic we are subscribed to 
 void waitForAny();
