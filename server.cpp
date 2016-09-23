@@ -11,11 +11,13 @@
 #include "tcp.h"
 #include "messages.h"
 #include "data.h"
+#include "time.h"
 
 namespace diamondapparatus {
 
 static bool serverKill=false;
-
+static int msgssent=0;
+static int msgsrecvd=0;
 
 class MyServer : public TCPServer {
     // lists of subscribers to each topic
@@ -35,6 +37,25 @@ class MyServer : public TCPServer {
         return t;
     }
     
+    void publishInternal(const char *name, Topic* t){
+        // and publish it.
+        int pktsize;
+        const char *p = t->toMessage(&pktsize,SC_NOTIFY,name);
+        
+        // get the list of subscribers to this topic
+        std::set<int>& subs = subscribers[name];
+        std::set<int>::iterator i2;
+        dprintf("--- publish loop for internal %s\n",name);
+        for(i2=subs.begin();i2!=subs.end();++i2){
+            printf("----Sending to %d\n",*i2);
+            basesend(*i2,p,pktsize);
+            msgssent++;
+        }
+        dprintf("--- publish loop done\n");
+        free((void *)p);
+    }
+    
+    
     void rebuildTopicsTopic(){
         Topic *t = findOrCreateTopic("topics");
         t->clear();
@@ -42,19 +63,17 @@ class MyServer : public TCPServer {
         for(i=topics.begin();i!=topics.end();++i){
             t->add(Datum(i->first.c_str()));
         }
-        // and publish it.
-        int pktsize;
-        const char *p = t->toMessage(&pktsize,SC_NOTIFY,"topics");
-        
-        // get the list of subscribers to this topic
-        std::set<int>& subs = subscribers["topics"];
-        std::set<int>::iterator i2;
-        dprintf("--- publish loop for topics\n");
-        for(i2=subs.begin();i2!=subs.end();++i2){
-            printf("----Sending to %d\n",*i2);
-            basesend(*i2,p,pktsize);
-        }
-        dprintf("--- publish loop done\n");
+        publishInternal("topics",t);
+    }
+    
+    void rebuildStatsTopic(){
+        Topic *t = findOrCreateTopic("stats");
+        t->clear();
+        t->add(Datum(subscribers.size()));
+        t->add(Datum(msgssent));
+        t->add(Datum(msgsrecvd));
+        t->add(Datum(Time::now()));
+        publishInternal("stats",t);
     }
     
     void subscribe(int fd,const char *n){
@@ -72,6 +91,8 @@ class MyServer : public TCPServer {
             int size;
             const char *p = t->toMessage(&size,SC_NOTIFY,n);
             respond((void *)p,size);
+            msgssent++;
+            free((void *)p);
         }
         
     }
@@ -131,6 +152,7 @@ class MyServer : public TCPServer {
         for(i=subs.begin();i!=subs.end();++i){
             printf("----Sending to %d\n",*i);
             basesend(*i,p,pktsize);
+            msgssent++;
         }
         dprintf("--- publish loop done\n");
         
@@ -141,13 +163,23 @@ class MyServer : public TCPServer {
     
 public:
     MyServer(int port) : TCPServer(port){
+        rebuildStatsTopic();
         rebuildTopicsTopic();
     }
+    virtual ~MyServer(){
+        std::map<std::string,Topic *>::iterator i;
+        for(i=topics.begin();i!=topics.end();++i){
+            delete i->second;
+        }
+    }
+    
     virtual void process(uint32_t packetsize,void *packet){
         const char *name;
         char *p = (char *)packet;
         StrMsg *sm;
         
+        msgsrecvd++;
+        rebuildStatsTopic();
         
         uint32_t type = ntohl(*(uint32_t *)p);
 //        printf("Packet type %d\n",type);
@@ -182,6 +214,7 @@ public:
         m.type = htonl(SC_KILLCLIENT);
         for(std::map<int,ClientInServer*>::iterator it=clients.begin();it!=clients.end();++it){
             basesend(it->first,&m,sizeof(m));
+            msgssent++;
         }
         // wait for client death
         sleep(2);

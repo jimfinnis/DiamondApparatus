@@ -32,8 +32,8 @@
 #define DT_STRING 1
 
 
-#define VERSION 103
-#define VERSIONNAME "Red Tabletop"
+#define VERSION 104
+#define VERSIONNAME "Grey Chalk"
 
 #ifdef __cplusplus
 

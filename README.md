@@ -56,11 +56,15 @@ Will print the current version number and name, and exit.
 Just checks to see if the server is alive, silently exiting with
 return code 0 if it is and failing with return code 1 if not. Useful
 in scripts. The server also does this, so two servers don't run.
+Finally, the diamond application also does this when no command line options
+are given, so you can just type "diamond" and ignore the usage notes.
 
 ## Special topics
 The server publishes several special topics to which other programs
 can subscribe. These are:
 - **topics** : a list of all published topics
+- **stats** : server stats (subscriber count, msgs sent, msgs received,
+uptime in seconds)
 
 
 ## API

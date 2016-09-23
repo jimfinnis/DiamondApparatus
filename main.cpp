@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "diamondapparatus.h"
+#include "time.h"
 
 using namespace diamondapparatus;
 
@@ -30,6 +31,9 @@ void handler(int sig){
 int main(int argc,char *argv[]){
     char c;
     bool daemonizeServer=false;
+    
+    Time::init();
+    
     while((c=getopt(argc,argv,"d"))!=-1){
         switch(c){
         case 'd':
@@ -39,6 +43,13 @@ int main(int argc,char *argv[]){
     }
     
     if(optind>=argc){
+        try {
+            init();
+            destroy();
+            printf("Server is running.\n");
+        } catch(DiamondException e){
+            printf("Server is not running.\n");
+        }
         usagepanic();
     }
     
@@ -54,6 +65,7 @@ int main(int argc,char *argv[]){
             init();
             // only get here if there is a server. Rude, this code.
             fprintf(stderr,"Server already running.\n");
+            destroy();
             exit(1);
         } catch(DiamondException e){
             // ignore exception
