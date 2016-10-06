@@ -12,9 +12,10 @@ to that topic receive the new data. The broker (server) also stores
 the last data on a topic, and sends it to any new subscriber.
 
 ## Environment variables: hostname and port
+These tell clients where the server lives.
 The default port number is **29921**, but can be changed by setting
 the **DIAMOND_PORT** environment variable. Similarly, the hostname
-for client connection can be set by the **DIAMOND_HOST** environment
+for client connection (localhost by default) can be set by the **DIAMOND_HOST** environment
 variable.
 
 ## Main program
