@@ -43,6 +43,19 @@ struct Datum {
         }
     }
     
+    // assign
+    Datum& operator = (const Datum &q){
+        t = q.t;
+        switch(t){
+        case DT_FLOAT:
+            d.f = q.d.f;
+            break;
+        case DT_STRING:
+            d.s = strdup(q.d.s);
+            break;
+        }
+    }
+    
     Datum(float f){
         t = DT_FLOAT;
         d.f=f;
@@ -98,14 +111,29 @@ private:
     std::vector<Datum> d;
     double timeLastSet; // time of last update (used on client only)
 public:
+    static Datum zeroDat;
+    int state;
     
     Topic(){
         state = TOPIC_NODATA;
         timeLastSet=-1;
-    }  
+    }
     
-    int state;
-    static Datum zeroDat;
+    Topic(const Topic& t) : d(t.d.begin(),t.d.end()){
+        state=t.state;
+        timeLastSet=t.timeLastSet;
+    }
+    
+    Topic& operator = (const Topic& t){
+        state=t.state;
+        timeLastSet=t.timeLastSet;
+        d = std::vector<Datum>(t.d.begin(),t.d.end());
+    }
+        
+    
+    ~Topic(){}
+        
+    
     
     const Datum &operator[] (int n) const {
         if(n<0 || n>=d.size())
