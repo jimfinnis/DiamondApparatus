@@ -48,3 +48,23 @@ will wait for new data on a topic. If a topic has been subscribed to,
 the server will send data to the client immediately so this call may return
 immediately - it depends on the timing. If you want to wait for new data,
 put a short delay between the subscribe() and the waitforany().
+
+
+# Example code
+Here's a publisher:
+```python
+from diamondapparatus import *
+init()
+publish("foo",[0,1,2,"fish"])
+```
+
+And here's a subscriber:
+```python
+from diamondapparatus import *
+init()
+subscribe("foo")
+while True:
+    print get("foo",wait=WaitNew)
+```
+    
+
