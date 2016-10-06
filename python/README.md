@@ -1,6 +1,6 @@
 This is a set of simple python bindings for Diamond Apparatus.
 
-== Building ==
+# Building
 You should have python's **distutils** installed already (most Pythons
 come with this). Build and install Diamond Apparatus, then run from
 this directory
@@ -10,7 +10,7 @@ sudo python setup.py install
 ```
 and you should be ready to run.
 
-== The API ==
+# The API
 This is fairly similar to the C++ API, but lists and tuples mean we
 don't need to worry about the Topic and Datum types.
 
