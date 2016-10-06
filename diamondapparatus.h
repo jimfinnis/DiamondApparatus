@@ -152,7 +152,7 @@ int diamondapparatus_get(const char *n,int wait);
 /// is the last topic got a valid topic to fetch data from?
 int diamondapparatus_isfetchvalid();
 /// wait for a message on any topic we are subscribed to 
-int waitforany();
+int diamondapparatus_waitforany();
 
 /// read a string from the topic got
 const char *diamondapparatus_fetchstring(int n);

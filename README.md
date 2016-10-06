@@ -1,6 +1,8 @@
 Diamond Apparatus (named randomly by http://pale.org/rainbow.php)
 is a simple publish/subscribe broker and library, using C++ and
-TCP/IP. It's a bit slow, not sure why -- about 10 msgs a second
+TCP/IP. There is also a set of Python bindings for the client-side
+operations, this is documented in [python/README.md]. 
+The system is a bit slow, not sure why -- about 10 msgs a second
 on loopback.
 
 Data is in the form of topics, named blocks of data. Each topic
@@ -107,13 +109,17 @@ by setting the **wait** value:
 - **GET_WAITANY** waits until the topic contains data, and will not block
 block at all if the topic contains even old data. Use this for routine
 access to topics.
-- **GET_WAITNEW** waits until new data arrive, and will block if the
+- **GET_WAITNEW** waits until new data arrives, and will block if the
 topic contains no data or old data. Use this to wait for updated data.
 - **GET_WAITNONE** (default) always returns immediately - you should
 use **isValid()** on the topic to check if data is present yet.
 
 ### waitForAny()
 Waits for new data on any topic to which the client is subscribed.
+If a topic has been subscribed to,
+the server will send data to the client immediately so this call may return
+immediately - it depends on the timing. If you want to wait for new data,
+put a short delay between the subscribe() and the waitForAny().
 
 ### killServer()
 Sends a message to the server to kill itself.
