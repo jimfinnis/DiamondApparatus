@@ -1,7 +1,7 @@
 Diamond Apparatus (named randomly by http://pale.org/rainbow.php)
 is a simple publish/subscribe broker and library, using C++ and
 TCP/IP. There is also a set of Python bindings for the client-side
-operations, this is documented in [python/README.md]. 
+operations, this is documented in [./python/README.md](./python/README.md). 
 The system is a bit slow, not sure why -- about 10 msgs a second
 on loopback.
 
