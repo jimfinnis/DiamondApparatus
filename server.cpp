@@ -163,6 +163,9 @@ class MyServer : public TCPServer {
     
 public:
     MyServer(int port) : TCPServer(port){
+        Topic *t = findOrCreateTopic("version");
+        t->add(Datum(VERSION));
+        t->add(Datum(VERSIONNAME));
         rebuildStatsTopic();
         rebuildTopicsTopic();
     }

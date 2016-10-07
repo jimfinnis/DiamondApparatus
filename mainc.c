@@ -14,7 +14,7 @@
 #include "diamondapparatus.h"
 
 void usagepanic(){
-    fprintf(stderr,"Diamond Apparatus %d (%s)\n",VERSION,VERSIONNAME);
+    fprintf(stderr,"Diamond Apparatus (C CLIENT: ILLUSTRATIVE PURPOSES ONLY) %s (%s)\n",VERSION,VERSIONNAME);
     fprintf(stderr,"Usage: diamond server | pub <topic> <types> <val>... | listen <topic> | show <topic> | kill | version\n");
     fprintf(stderr,"       types is a string of chars, f=float, s=string.\n");
     exit(1);
@@ -44,7 +44,7 @@ int main(int argc,char *argv[]){
     }
     
     if(!strcmp(argv[1],"version")){
-        printf("Diamond Apparatus %d (%s)\n",VERSION,VERSIONNAME);
+        printf("Diamond Apparatus %s (%s)\n",VERSION,VERSIONNAME);
         exit(0);
     }
     

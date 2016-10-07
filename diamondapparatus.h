@@ -32,8 +32,8 @@
 #define DT_STRING 1
 
 
-#define VERSION 104
-#define VERSIONNAME "Grey Chalk"
+#define VERSION "1.1.0"
+#define VERSIONNAME "Malachite Gander"
 
 #ifdef __cplusplus
 
