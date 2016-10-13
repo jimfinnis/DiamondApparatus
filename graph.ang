@@ -1,3 +1,8 @@
+
+# This is an Angort package for live graphing of Diamond Apparatus topics.
+# If you don't know what Angort is, don't worry about it :)
+
+
 package graph
 
 [`time,`sdl,`diamond] each {i library drop}
