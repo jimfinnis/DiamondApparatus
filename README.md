@@ -1,9 +1,29 @@
 Diamond Apparatus (named randomly by http://pale.org/rainbow.php)
-is a simple publish/subscribe broker and library, using C++ and
+is a simple topic-based publish/subscribe broker and library, using C++ and
 TCP/IP. There is also a set of Python bindings for the client-side
 operations, this is documented in [./python/README.md](./python/README.md). 
 The system is a bit slow, not sure why -- about 10 msgs a second
 on loopback.
+
+# Motivation
+Two popular systems which provide publish/subscribe are ROS and MQQT.
+
+ROS is insane. It's a nested mess of different dependency hells,
+to the point where each version of ROS requires a different specific
+version of Ubuntu to run. Additionally, to work within ROS a program
+has to be built with ROS's unwieldy build system, with its own
+complex directory structure, and can only run as part of ROS.
+[read this for more.](https://github.com/NixOS/nixpkgs/pull/14798#issuecomment-217502146)
+
+MQQT is OK, but it's hairy to get into and designed more for Internet
+of Things rather than TCP/IP (often between processes on the same host),
+as Diamond Apparatus is.
+
+There are others, but they're often aimed at particular domains. I just
+wanted something that behaved a bit like ROS topics, but without the
+ludicrous dependency overhead.
+
+# Data format
 
 Data is in the form of topics, named blocks of data. Each topic
 contains an array of Datum objects, which are either floats or strings.
