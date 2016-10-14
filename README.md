@@ -6,7 +6,8 @@ The system is a bit slow, not sure why -- about 10 msgs a second
 on loopback.
 
 # Motivation
-Two popular systems which provide publish/subscribe are ROS and MQQT.
+Three popular systems which provide publish/subscribe are ROS, MQQT
+and ZeroMQ.
 
 ROS is insane. It's a nested mess of different dependency hells,
 to the point where each version of ROS requires a different specific
@@ -18,6 +19,24 @@ complex directory structure, and can only run as part of ROS.
 MQQT is OK, but it's hairy to get into and designed more for Internet
 of Things rather than TCP/IP (often between processes on the same host),
 as Diamond Apparatus is.
+
+ZeroMQ is great - and (I'll be honest) I didn't know about it before I
+wrote Diamond Apparatus. It's powerful, it's lightweight and it can do
+everything DA does. But it's slightly lower-level, and I find that
+it's much quicker to hack together a bit of code to connect with DA
+than with ZeroMQ. What could be faster (in Python) than
+```python
+import diamondapparatus as da
+da.init()
+da.publish("/foo",(1,2,3,4))
+```
+Also, while a brokerless system is a great idea, I often find that
+I've got dozens of bits of code all moving around between different
+scripts and machines as I work. I'd rather not have to write stuff
+to handle the varying configurations of which endpoint is on which machine.
+But yes, ZeroMQ is great and you should use it if you're doing anything
+at all complicated. If you can't get it to work in DA how you'd like, 
+ZeroMQ is probably the way to go.
 
 There are others, but they're often aimed at particular domains. I just
 wanted something that behaved a bit like ROS topics, but without the
