@@ -32,8 +32,8 @@
 #define DT_STRING 1
 
 
-#define VERSION "1.1.0"
-#define VERSIONNAME "Malachite Gander"
+#define VERSION "1.1.1"
+#define VERSIONNAME "VIOLET ACTION"
 
 #ifdef __cplusplus
 

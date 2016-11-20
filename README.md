@@ -61,7 +61,7 @@ variable.
 The main program can be used to run the server, listen for changes,
 publish new data, and kill the server.
 
-### diamond server
+### diamond server [-d]
 This will run the server and never exit. With the -d option, the
 server will daemonize itself (detach from the terminal and run
 in the background).
@@ -83,13 +83,17 @@ will publish a string ("Hello") and two floats to the "foo" topic.
 
 ### diamond show _name_
 This will wait for data to be present for the topic _name_, and 
-will print it to stdout. If the server exits, the wait will abort;
+will print it to stdout as CSV. If the server exits, the wait will abort;
 if the server already has data for this topic, it will send it
 to the program and the wait will be brief.
-### diamond listen _name_
+
+### diamond listen [-s] [-h] _name_
 This will start a loop listening for changes with a frequency of 10Hz.
-Changed data will be written to stdout. If the server exits, the program
-will exit. It can be killed with the usual signals.
+Changed data will be written to stdout as CSV. 
+If the server exits, the program
+will exit. It can be killed with the usual signals. The header line
+can be suppressed with the -h option, and slashes in the topic name
+can be replace with "." with -s (this is for loading the CSV into R).
 
 ### diamond version
 Will print the current version number and name, and exit.
@@ -179,7 +183,9 @@ attempt is made to access an out of range datum, a float zero datum will be retu
 - the **state** member contains the state of the topic.
 - **double age()** returns the number of seconds since data was received
 on this topic.
-- **dump()** will print the topic's data as a list of lines to stdout.
+- **dump()** will print the topic's data as a comma separated list to stdout.
+- **appendCSVToStringStream(std::stringstream& ss)** will append the topic
+as a comma-separated line to a C++ stringstream.
 
 ### Topic states
 as set in topic copies returned from **get()**:
@@ -219,6 +225,8 @@ Topic t = get("foo",GET_WAITANY);
 t[0].dump();
 }   
 ```
+There is also **appendToStringStream()** to append a datum to a string
+stream.
 
 ## An example: what "diamond show" does
 This is the code for the **diamond show** command:

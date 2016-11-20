@@ -14,30 +14,82 @@
 
 using namespace diamondapparatus;
 
+static bool daemonizeServer=false;
+static bool listenHeaders=true;
+static bool replaceSlash=false;
+static bool exitListenLoop=false;
+static bool listening=false;
+
 void usagepanic(){
     fprintf(stderr,"Diamond Apparatus %s (%s)\n",VERSION,VERSIONNAME);
-    fprintf(stderr,"Usage: diamond server | pub <topic> <types> <val>... | listen <topic> | show <topic> | kill | version\n");
+    fprintf(stderr,"Usage: diamond server [-d] | pub <topic> <types> <val>... | listen [-hs] <topic> | show <topic> | kill | version\n");
     fprintf(stderr,"       types is a string of chars, f=float, s=string.\n");
+    fprintf(stderr,"Options:\n");
+    fprintf(stderr,"    -d : (server) start server as daemon\n");
+    fprintf(stderr,"    -h : (listen) suppress header line\n");
+    fprintf(stderr,"    -s : (server) replace / with . (for R)\n");
+    
     exit(1);
 }
 
 void handler(int sig){
-    printf("sig %d caught\n",sig);
-    destroy(); // shut down client
-    exit(1); // no safe way to continue
+    if(listening){
+        exitListenLoop=true;
+    } else {
+        printf("sig %d caught\n",sig);
+        destroy(); // shut down client
+        exit(1); // no safe way to continue
+    }
+}
+
+
+// the listen command
+void cmdListen(const char *topic){
+    bool headerDone=false;
+    init();
+    subscribe(topic);
+    char *printedname=strdup(topic);
+    
+    if(replaceSlash && listenHeaders){
+        for(char *p = printedname;*p;p++)
+            if(*p=='/')*p='.';
+    }
+    
+    listening=true;
+    while(isRunning() && !exitListenLoop){
+        Topic t = get(topic,GET_WAITNEW);
+        if(!headerDone){
+            headerDone=true;
+            if(listenHeaders){
+                for(int i=0;i<t.size();i++){
+                    printf("%s%d%s",printedname,i,i<t.size()-1?",":"\n");
+                }
+            }
+        }
+        if(t.isValid()){
+           t.dump();
+       }
+    }
+    free(printedname);
+    listening=false;
 }
 
 
 int main(int argc,char *argv[]){
     char c;
-    bool daemonizeServer=false;
     
     Time::init();
     
-    while((c=getopt(argc,argv,"d"))!=-1){
+    while((c=getopt(argc,argv,"dhs"))!=-1){
         switch(c){
         case 'd':
             daemonizeServer=true;
+            break;
+        case 'h':
+            listenHeaders=false;
+            break;
+        case 's':
+            replaceSlash=true;
             break;
         }
     }
@@ -118,21 +170,14 @@ int main(int argc,char *argv[]){
         } else if(!strcmp(argv[0],"listen")){
             if(argc<2)
                 usagepanic();
-            init();
-            subscribe(argv[1]);
-            while(isRunning()){
-                Topic t = get(argv[1],GET_WAITNEW);
-                for(int i=0;i<t.size();i++)
-                    t[i].dump();
-            }
+            cmdListen(argv[1]);
         } else if(!strcmp(argv[0],"show")){
             if(argc<2)
                 usagepanic();
             init();
             subscribe(argv[1]);
             Topic t = get(argv[1],GET_WAITANY);
-            for(int i=0;i<t.size();i++)
-                t[i].dump();
+            t.dump();
         } else if(!strcmp(argv[0],"pub")){
             init();
             if(argc<4)

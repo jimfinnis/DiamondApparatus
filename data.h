@@ -12,6 +12,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <vector>
+#include <string>
+#include <sstream>
+#include <iostream>
 
 
 namespace diamondapparatus {
@@ -75,13 +78,13 @@ struct Datum {
         else return d.s;
     }
     
-    void dump() const{
+    void appendToStringStream(std::stringstream& ss){
         switch(t){
         case DT_FLOAT:
-            printf("%f\n",d.f);
+            ss << d.f;
             break;
         case DT_STRING:
-            printf("%s\n",d.s);
+            ss << d.s;
             break;
         }
     }
@@ -134,6 +137,12 @@ public:
     ~Topic(){}
         
     
+    void appendCSVToStringStream(std::stringstream& ss){
+        for(int i=0;i<size();i++){
+            d[i].appendToStringStream(ss);
+            if(i<size()-1)ss << ",";
+        }
+    }
     
     const Datum &operator[] (int n) const {
         if(n<0 || n>=d.size())
@@ -155,9 +164,9 @@ public:
     }
     
     void dump(){
-        for(int i=0;i<size();i++){
-            d[i].dump();
-        }
+        std::stringstream ss;
+        appendCSVToStringStream(ss);
+        std::cout << ss.str() << std::endl;
     }
                   
     
