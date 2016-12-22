@@ -24,6 +24,7 @@ void usagepanic(){
     fprintf(stderr,"Diamond Apparatus %s (%s)\n",VERSION,VERSIONNAME);
     fprintf(stderr,"Usage: diamond server [-d] | pub <topic> <types> <val>... | listen [-hs] <topic> | show <topic> | kill | version\n");
     fprintf(stderr,"       types is a string of chars, f=float, s=string.\n");
+    fprintf(stderr,"       Specify -ve numbers with leading n, not -.\n");
     fprintf(stderr,"Options:\n");
     fprintf(stderr,"    -d : (server) start server as daemon\n");
     fprintf(stderr,"    -h : (listen) suppress header line\n");
@@ -191,6 +192,8 @@ int main(int argc,char *argv[]){
                     usagepanic();
                 switch(c){
                 case 'f':
+                    if(argv[argidx][0]=='n')
+                        argv[argidx][0]='-';
                     t.add(Datum(atof(argv[argidx++])));
                     break;
                 case 's':

@@ -76,10 +76,12 @@ This will publish values to a topic. The types string consists of
 "s" for string and "f" for float, so 
 
 ```
-diamond pub foo sff Hello 0.1 0.2
+diamond pub foo sff Hello 0.1 0.2 n0.3
 ```
 
-will publish a string ("Hello") and two floats to the "foo" topic.
+will publish a string ("Hello") and three floats to the "foo" topic.
+Note that third one - to avoid clashes with options, prefix negative
+numbers with "n" rather than "-". This is a temporary hack.
 
 ### diamond show _name_
 This will wait for data to be present for the topic _name_, and 
