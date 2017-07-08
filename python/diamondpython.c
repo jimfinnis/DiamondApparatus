@@ -7,20 +7,70 @@
 #include <Python.h>
 #include <diamondapparatus/diamondapparatus.h>
 
-static PyObject *DiamondError;
+struct module_state {
+    PyObject *error;
+};
+
+
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
 static PyMethodDef DiamondMethods[];
 
-#define CHKRUN if(!diamondapparatus_isrunning()){\
-    PyErr_SetString(DiamondError,"unable to communicate with server");return NULL;}
+#if PY_MAJOR_VERSION >= 3
+
+static int diamond_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int diamond_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
 
 
-PyMODINIT_FUNC initdiamondapparatus(void){
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "diamondapparatus",
+        NULL,
+        sizeof(struct module_state),
+        DiamondMethods,
+        NULL,
+        diamond_traverse,
+        diamond_clear,
+        NULL
+};
+#define INITERROR return NULL
+PyMODINIT_FUNC
+PyInit_diamondapparatus(void)
+
+#else
+
+#define INITERROR return
+void 
+initdiamondapparatus(void)
+#endif
+{
     PyObject *m;
-    if(!(m = Py_InitModule("diamondapparatus",DiamondMethods)))
-        return;
-    DiamondError = PyErr_NewException("diamondapparatus.error",NULL,NULL);
-    Py_INCREF(DiamondError);
-    PyModule_AddObject(m,"error",DiamondError);
+#if PY_MAJOR_VERSION >= 3
+    m = PyModule_Create(&moduledef);
+#else
+    m = Py_InitModule("diamondapparatus",DiamondMethods);
+#endif
+    if(!m)INITERROR;
+    
+    struct module_state *st = GETSTATE(m);
+    st->error = PyErr_NewException("diamondapparatus.Error",NULL,NULL);
+    if(st->error==NULL){
+        Py_DECREF(m);
+        INITERROR;
+    }
     
     // topic states
     PyModule_AddIntConstant(m,"NoData",TOPIC_NODATA);
@@ -33,12 +83,19 @@ PyMODINIT_FUNC initdiamondapparatus(void){
     PyModule_AddIntConstant(m,"WaitNone",GET_WAITNONE);
     PyModule_AddIntConstant(m,"WaitNew",GET_WAITNEW);
     PyModule_AddIntConstant(m,"WaitAny",GET_WAITANY);
+    
+#if PY_MAJOR_VERSION >= 3
+    return m;
+#endif
+    
 }
     
+#define CHKRUN if(!diamondapparatus_isrunning()){\
+    PyErr_SetString(GETSTATE(self)->error,"unable to communicate with server");return NULL;}
 
 static PyObject *diamond_init(PyObject *self,PyObject *args){
     if(diamondapparatus_init()<0){
-        PyErr_SetString(DiamondError,"unable to communicate with server");
+        PyErr_SetString(GETSTATE(self)->error,"unable to communicate with server");
         return NULL;
     }
     Py_RETURN_NONE;
@@ -70,13 +127,19 @@ static PyObject *diamond_publish(PyObject *self,PyObject *args){
     diamondapparatus_newtopic();
     for(i=0;i<len;i++){
         PyObject *item = PySequence_Fast_GET_ITEM(seq,i);
-        if(PyNumber_Check(item))
+        if(PyNumber_Check(item)){
             diamondapparatus_addfloat(PyFloat_AsDouble(item));
-        else if(PyString_Check(item))
+#if PY_MAJOR_VERSION < 3
+        } else if(PyString_Check(item)){
             diamondapparatus_addstring(PyString_AsString(item));
-        else {
+#endif
+        } else if(PyUnicode_Check(item)){
+            PyObject *str = PyUnicode_AsEncodedString(item,"utf-8","ignore");
+            diamondapparatus_addstring(PyBytes_AS_STRING(str));
+            Py_DECREF(str);
+        } else {
             Py_DECREF(seq);
-            PyErr_SetString(DiamondError,"published topics must be sequences of numbers and strings");
+            PyErr_SetString(GETSTATE(self)->error,"published topics must be sequences of numbers and strings");
             return NULL;
         }
         
@@ -84,7 +147,7 @@ static PyObject *diamond_publish(PyObject *self,PyObject *args){
     Py_DECREF(seq);
     
     if(diamondapparatus_publish(topic)<0){
-        PyErr_SetString(DiamondError,diamondapparatus_error());
+        PyErr_SetString(GETSTATE(self)->error,diamondapparatus_error());
         return NULL;
     }
     Py_RETURN_NONE;
@@ -95,7 +158,7 @@ static PyObject *diamond_subscribe(PyObject *self,PyObject *args){
     if(!PyArg_ParseTuple(args,"s",&topic))
         return NULL;
     if(diamondapparatus_subscribe(topic)<0){
-        PyErr_SetString(DiamondError,diamondapparatus_error());
+        PyErr_SetString(GETSTATE(self)->error,diamondapparatus_error());
         return NULL;
     }
     Py_RETURN_NONE;
@@ -111,7 +174,7 @@ static PyObject *diamond_get(PyObject *self,PyObject *args,PyObject *keywds){
                                     &topic,&waittype))
         return NULL;
     if(diamondapparatus_get(topic,waittype)<0){
-        PyErr_SetString(DiamondError,diamondapparatus_error());
+        PyErr_SetString(GETSTATE(self)->error,diamondapparatus_error());
         return NULL;
     }
     
@@ -127,11 +190,16 @@ static PyObject *diamond_get(PyObject *self,PyObject *args,PyObject *keywds){
                    PyFloat_FromDouble(diamondapparatus_fetchfloat(i)));
                 break;
             case DT_STRING:
+#if PY_MAJOR_VERSION >= 3
                 PyTuple_SetItem(o,i,
-                   PyString_FromString(diamondapparatus_fetchstring(i)));
+                                PyUnicode_FromString(diamondapparatus_fetchstring(i)));
+#else
+                PyTuple_SetItem(o,i,
+                                PyString_FromString(diamondapparatus_fetchstring(i)));
+#endif
                 break;
             default:
-                PyErr_SetString(DiamondError,"bad type in topic!");
+                PyErr_SetString(GETSTATE(self)->error,"bad type in topic!");
                 return NULL;
             }
         }
@@ -144,7 +212,7 @@ static PyObject *diamond_get(PyObject *self,PyObject *args,PyObject *keywds){
 static PyObject *diamond_waitforany(PyObject *self,PyObject *args){
     CHKRUN;
     if(diamondapparatus_waitforany()<0){
-        PyErr_SetString(DiamondError,diamondapparatus_error());
+        PyErr_SetString(GETSTATE(self)->error,diamondapparatus_error());
         return NULL;
     }
     Py_RETURN_NONE;
