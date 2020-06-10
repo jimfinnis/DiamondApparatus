@@ -44,7 +44,7 @@ ludicrous dependency overhead.
 
 # Data format
 
-Data is in the form of topics, named blocks of data. Each topic
+Data is in the form of topics: named blocks of data. Each topic
 contains an array of Datum objects, which are either floats or strings.
 Publishers send topics, and any subscribers subscribed
 to that topic receive the new data. The broker (server) also stores
