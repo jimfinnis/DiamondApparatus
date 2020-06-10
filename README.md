@@ -152,8 +152,8 @@ way, the state of the returned topic should be checked for validity
 (with **Topic::isValid()**). Otherwise, we can wait for new data
 to arrive or wait for data only if there is no data yet. This is done
 by setting the **wait** value:
-- **GET_WAITANY** waits until the topic contains data, and will not block
-block at all if the topic contains even old data. Use this for routine
+- **GET_WAITANY** waits until the topic contains data, and will not
+block at all even if the topic contains old data. Use this for routine
 access to topics.
 - **GET_WAITNEW** waits until new data arrives, and will block if the
 topic contains no data or old data. Use this to wait for updated data.
@@ -176,7 +176,7 @@ untouched. Mainly used in testing.
 
 ## Topics
 Topics, used by **publish()** and **get()**, support the following operations:
-- **size()** returns the size (number of Data)
+- **size()** returns the number of Datum objects stored in the topic.
 - **square brackets** access individual Datum objects (as constant refs). If an
 attempt is made to access an out of range datum, a float zero datum will be returned.
 - **add(const Datum&)** adds a datum (for publishing)
@@ -210,13 +210,23 @@ publish("foo",&t);
 
 The value of data can be retrieved with the **s()** and **f()**
 functions, returning string (as const char pointer) and float
-respectively. If the retrieval of the wrong type is attempted,
-default values will be returned:
+respectively. If retrieval of the wrong type is attempted,
+default values will be returned: 0.0 for a string read as a float,
+and "?notstring?" for a float read as a string.
+The type of a Datum can be read from its **t** member variable,
+and is either **DT_FLOAT** or **DT_STRING**. As noted above, you can
+get the number of Datum objects in the Topic with the Topic's **size()** method.
+Here's an example
+of reading data from a topic, which is assumed to have a single
+string datum:
 
 ```c++
 subscribe("foo");
 Topic t = get("foo",GET_WAITANY);
-printf("%s\n",t[0].s());
+if(t[0].t == DT_STRING)
+    printf("%s\n",t[0].s());
+else
+    printf("Got data, but it's not a string.\n");
 }   
 ```
 Additionally, like a topic, a Datum has a **dump()** call to write
